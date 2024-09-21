@@ -228,7 +228,7 @@ def scatter(x, y, renderer=None, **kwargs):
         elif re.match("(x|y)=", add_line):
             try:
                 c = float(add_line.split("=")[1])
-            except:
+            except ValueError:
                 raise ValueError(
                     f"Unrecognized add_line: {add_line}. Please use either 'x=y' or 'x=c' or 'y=c' for some float c."
                 )
@@ -434,9 +434,9 @@ color_discrete_map = dict(
 
 
 def plot_failure_types_scatter(
-    unbalanced_component_1: Float[Tensor, "batch"],
-    unbalanced_component_2: Float[Tensor, "batch"],
-    failure_types_dict: dict[str, Float[Tensor, "batch"]],
+    unbalanced_component_1: Float[Tensor, " batch"],
+    unbalanced_component_2: Float[Tensor, " batch"],
+    failure_types_dict: dict[str, Float[Tensor, " batch"]],
     data,
 ):
     failure_types = np.full(len(unbalanced_component_1), "", dtype=np.dtype("U32"))
@@ -465,7 +465,7 @@ def plot_failure_types_scatter(
 
 
 def plot_contribution_vs_open_proportion(
-    unbalanced_component: Float[Tensor, "batch"],
+    unbalanced_component: Float[Tensor, " batch"],
     title: str,
     failure_types_dict: dict,
     data,

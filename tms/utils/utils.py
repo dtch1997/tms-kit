@@ -963,7 +963,7 @@ def frac_active_line_plot(
     fig.show()
 
 
-def plot_feature_geometry(model: "Model", dim_fracs=None):
+def plot_feature_geometry(model: "Model", dim_fracs=None): # noqa: F821
     fig = px.line(
         x=1 / model.feature_probability[:, 0].cpu(),
         y=(
