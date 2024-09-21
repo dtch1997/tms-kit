@@ -16,6 +16,7 @@ dependencies = [
     "pandas>=2.2.3",
     "matplotlib>=3.9.2",
     "rich>=13.8.1",
+    "ipykernel>=6.29.5",
 ]
 requires-python = ">=3.11"
 readme = "README.md"

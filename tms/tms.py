@@ -2,6 +2,7 @@
 
 import torch
 
+from jaxtyping import Float
 from abc import ABC
 from tms.data import DataGenerator, IIDGenerator
 from tms.loss import LossCalculator, ImportanceWeightedLoss
@@ -24,8 +25,8 @@ class BottleneckTMSConfig:
     d_hidden: int
     n_inst: int
     n_features: int
-    feature_probability: torch.Tensor
-    feature_importance: torch.Tensor
+    feature_probability: Float[torch.Tensor, "inst"]
+    feature_importance: Float[torch.Tensor, "inst feats"]
 
 class BottleneckTMS(TMS):
 
