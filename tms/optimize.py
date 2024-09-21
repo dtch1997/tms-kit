@@ -1,4 +1,4 @@
-""" Training code for a TMS """
+"""Training code for a TMS"""
 
 import torch
 import numpy as np
@@ -8,14 +8,18 @@ from tqdm import tqdm
 
 from tms.tms import TMS
 
+
 def linear_lr(step, steps):
-    return (1 - (step / steps))
+    return 1 - (step / steps)
+
 
 def constant_lr(*_):
     return 1.0
 
+
 def cosine_decay_lr(step, steps):
     return np.cos(0.5 * np.pi * step / (steps - 1))
+
 
 def optimize(
     tms: TMS,
@@ -27,8 +31,7 @@ def optimize(
     lr: float = 1e-3,
     lr_scale: Callable[[int, int], float] = constant_lr,
 ):
-    """ Optimizes the TMS using the given hyperparameters.
-    """
+    """Optimizes the TMS using the given hyperparameters."""
     optimizer = torch.optim.Adam(list(tms.model.parameters()), lr=lr)
 
     progress_bar = tqdm(range(steps), disable=disable_tqdm)

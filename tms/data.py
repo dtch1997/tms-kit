@@ -1,4 +1,4 @@
-""" Data generation for toy models of superposition """
+"""Data generation for toy models of superposition"""
 
 import torch
 import einops
@@ -8,25 +8,30 @@ from jaxtyping import Float
 from torch import Tensor
 from tms.utils.device import get_device
 
-class DataGenerator(ABC):
 
+class DataGenerator(ABC):
     n_features: int
     n_inst: int
     feature_probability: Float[Tensor, "inst feats"]
 
-    def __init__(self, n_features: int, n_inst: int, feature_probability: Float[Tensor, "inst feats"]):
+    def __init__(
+        self,
+        n_features: int,
+        n_inst: int,
+        feature_probability: Float[Tensor, "inst feats"],
+    ):
         self.n_features = n_features
         self.n_inst = n_inst
         self.feature_probability = feature_probability
 
     @abstractmethod
     def generate_batch(batch_size: int) -> Float[Tensor, "batch inst feats"]:
-        """ Override with custom logic to generate a batch of data. """
+        """Override with custom logic to generate a batch of data."""
         pass
 
 
 class IIDFeatureGenerator(DataGenerator):
-    """ Generates features IID. 
+    """Generates features IID.
 
     - Each feature is present with probability `feature_probability`.
     - For each present feature, the magnitude of each feature is drawn from Uniform(0, 1).
@@ -40,16 +45,14 @@ class IIDFeatureGenerator(DataGenerator):
         feat_mag = torch.rand(batch_shape, device=get_device())
         feat_seeds = torch.rand(batch_shape, device=get_device())
         return torch.where(feat_seeds <= self.feature_probability, feat_mag, 0.0)
-    
+
 
 class CorrelatedFeatureGenerator(DataGenerator):
-    """ Generates a batch of correlated features. 
+    """Generates a batch of correlated features.
     - For each pair `batch[i, j, [2k, 2k+1]]`, one of them is non-zero if and only if the other is non-zero.
     """
 
-    def generate_batch(
-        self, batch_size: int
-    ) -> Float[Tensor, "batch inst feats"]:
+    def generate_batch(self, batch_size: int) -> Float[Tensor, "batch inst feats"]:
         """
         Generates a batch of correlated features. For each pair `batch[i, j, [2k, 2k+1]]`, one of
         them is non-zero if and only if the other is non-zero.
@@ -58,7 +61,9 @@ class CorrelatedFeatureGenerator(DataGenerator):
         - Create a boolean mask of shape [batch inst n_correlated_pairs] which represents whether the feature set is present
         - Repeat that mask across feature pairs.
         """
-        assert self.n_features % 2 == 0, "Number of features must be even for correlated features."
+        assert (
+            self.n_features % 2 == 0
+        ), "Number of features must be even for correlated features."
         n_correlated_pairs = self.n_features // 2
 
         assert torch.all((self.feature_probability == self.feature_probability[:, [0]]))
@@ -80,12 +85,13 @@ class CorrelatedFeatureGenerator(DataGenerator):
 
 
 class AnticorrelatedFeatureGenerator(DataGenerator):
-    """ Generates a batch of anti-correlated features. 
-    
+    """Generates a batch of anti-correlated features.
+
     For each pair `batch[i, j, [2k, 2k+1]]`, each of them can only be non-zero if the other one is zero.
     - batch[i, j, 2k] is present with probability p
     - batch[i, j, 2k+1] is present with probability p / (1 - p), if and only if batch[i, j, 2k] is present.
     """
+
     def generate_batch(
         self, batch_size: int
     ) -> Float[Tensor, "batch inst 2*n_anticorrelated_pairs"]:
@@ -93,7 +99,9 @@ class AnticorrelatedFeatureGenerator(DataGenerator):
         Generates a batch of anti-correlated features. For each pair `batch[i, j, [2k, 2k+1]]`, each
         of them can only be non-zero if the other one is zero.
         """
-        assert self.n_features % 2 == 0, "Number of features must be even for correlated features."
+        assert (
+            self.n_features % 2 == 0
+        ), "Number of features must be even for correlated features."
         n_anticorrelated_pairs = self.n_features // 2
 
         assert torch.all((self.feature_probability == self.feature_probability[:, [0]]))
@@ -105,8 +113,7 @@ class AnticorrelatedFeatureGenerator(DataGenerator):
             (batch_size, self.n_inst, 2 * n_anticorrelated_pairs), device=get_device()
         )
         even_feat_seeds, odd_feat_seeds = torch.rand(
-            (2, batch_size, self.n_inst, n_anticorrelated_pairs),
-            device=get_device()
+            (2, batch_size, self.n_inst, n_anticorrelated_pairs), device=get_device()
         )
         even_feat_is_present = even_feat_seeds <= p
         odd_feat_is_present = (even_feat_seeds > p) & (odd_feat_seeds <= p / (1 - p))
