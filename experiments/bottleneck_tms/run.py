@@ -1,3 +1,4 @@
+# %%
 """ Script to train and visualize a Toy Model of Superposition 
 
 Usage as script: 
@@ -219,4 +220,4 @@ def run_2x2_anticorrelated_experiment():
     fig.savefig("2x2_anticorrelated.png")
 
 run_2x2_anticorrelated_experiment()
-
+# %%
