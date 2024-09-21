@@ -1,18 +1,55 @@
 """ Script to train and visualize a Toy Model of Superposition 
 
 Usage: Run as Jupyter cells using 'Run Below'
+- The first cell defines all the necessary classes and functions
+- Each subsequent cell runs a different experiment and visualizes the results. It will also save the results as a .png file.
 """
 # %%
 import torch 
 import einops
 import matplotlib.pyplot as plt
 
-from tms.tms import BottleneckTMS, BottleneckTMSConfig
+from dataclasses import dataclass
+from jaxtyping import Float
+from typing import Type
+
+from tms.data import (
+    DataGenerator,
+    IIDFeatureGenerator, 
+    CorrelatedFeatureGenerator, 
+    AnticorrelatedFeatureGenerator
+)
+from tms.loss import ImportanceWeightedLoss
+from tms.model import Model
 from tms.optimize import optimize
+from tms.tms import TMS
 from tms.utils.device import get_device
 from tms.utils import utils
 from tms.utils.plotly import line, imshow
 
+@dataclass
+class BottleneckTMSConfig:
+    d_hidden: int
+    n_inst: int
+    n_features: int
+    feature_probability: Float[torch.Tensor, "inst feats"]
+    feature_importance: Float[torch.Tensor, "inst feats"]
+    data_gen_cls: Type[DataGenerator] = IIDFeatureGenerator
+
+class BottleneckTMS(TMS):
+
+    config: BottleneckTMSConfig
+
+    """ The original TMS setup from https://transformer-circuits.pub/2022/toy_model/index.html """
+    def __init__(self, config: BottleneckTMSConfig):
+        model = Model(config.n_features, config.n_inst, config.d_hidden)
+        data_gen = config.data_gen_cls(config.n_features, config.n_inst, config.feature_probability)
+        loss_calc = ImportanceWeightedLoss(config.n_features, config.feature_importance)
+        super().__init__(model, data_gen, loss_calc)
+
+        self.config = config
+
+# %% 
 def run_5_2_experiment():
     """ Visualize bottleneck superposition of 5 features in 2 dimensions """
 
@@ -46,6 +83,9 @@ def run_5_2_experiment():
     fig = plt.gcf()
     fig.savefig("5_2_superposition.png")
 
+run_5_2_experiment()
+
+# %%
 def run_100_20_experiment():
     """ Visualize bottleneck superposition of 100 features in 20 dimensions """
     device = get_device()
@@ -83,7 +123,94 @@ def run_100_20_experiment():
     fig = plt.gcf()
     fig.savefig("100_20_superposition.png")
 
-# %%
-run_5_2_experiment()
-# %% 
 run_100_20_experiment()
+
+# %%
+def run_2x2_correlated_experiment():
+    """ Visualize bottleneck superposition of 2 pairs of 2 correlated features in 2 dimensions"""
+
+    device = get_device()
+    n_inst = 5
+    n_features = 4
+    d_hidden = 2
+
+    feature_probability = (400 ** -torch.linspace(0.5, 1, n_inst)).to(device)
+    feature_importance = (torch.ones(n_features, dtype=torch.float)).to(device)
+
+    feature_importance = einops.repeat(feature_importance, 'feats -> inst feats', inst=n_inst)
+    feature_probability = einops.repeat(feature_probability, 'inst -> inst feats', feats=n_features)
+
+    config = BottleneckTMSConfig(
+        d_hidden=d_hidden,
+        n_inst=n_inst,
+        n_features=n_features,
+        feature_probability=feature_probability,
+        feature_importance=feature_importance,
+        data_gen_cls=CorrelatedFeatureGenerator
+    )
+    tms = BottleneckTMS(config)
+
+    # Sanity check the data generator
+    batch = tms.data_gen.generate_batch(batch_size=1)
+    utils.plot_correlated_features(
+        batch, title="Correlated feature pairs: should always co-occur"
+    )
+
+
+    optimize(tms)
+    utils.plot_features_in_2d(
+        tms.model.W,
+        colors=["blue"] * 2 + ["limegreen"] * 2,
+        title="Correlated feature sets are represented in local orthogonal bases",
+        subplot_titles=[f"1 - S = {i:.3f}" for i in feature_probability[:, 0]],
+    )
+
+    fig = plt.gcf()
+    fig.savefig("2x2_correlated.png")
+
+run_2x2_correlated_experiment()
+
+# %%
+def run_2x2_anticorrelated_experiment():
+    """ Visualize bottleneck superposition of 2 pairs of 2 anticorrelated features in 2 dimensions"""
+
+    device = get_device()
+    n_inst = 5
+    n_features = 4
+    d_hidden = 2
+
+    feature_probability = (10 ** -torch.linspace(0.5, 1, n_inst)).to(device)
+    feature_importance = (torch.ones(n_features, dtype=torch.float)).to(device)
+
+    feature_importance = einops.repeat(feature_importance, 'feats -> inst feats', inst=n_inst)
+    feature_probability = einops.repeat(feature_probability, 'inst -> inst feats', feats=n_features)
+
+    config = BottleneckTMSConfig(
+        d_hidden=d_hidden,
+        n_inst=n_inst,
+        n_features=n_features,
+        feature_probability=feature_probability,
+        feature_importance=feature_importance,
+        data_gen_cls=AnticorrelatedFeatureGenerator
+    )
+    tms = BottleneckTMS(config)
+    
+    # Sanity check the data generator
+    batch = tms.data_gen.generate_batch(batch_size=1)
+    utils.plot_correlated_features(
+        batch, title="Anti-correlated feature pairs: should never co-occur"
+    )
+
+    optimize(tms)
+    utils.plot_features_in_2d(
+        tms.model.W,
+        colors=["blue"] * 2 + ["limegreen"] * 2,
+        title="Anticorrelated feature sets are represented in antipodal pairs",
+        subplot_titles=[f"1 - S = {i:.3f}" for i in feature_probability[:, 0]],
+    )
+
+    fig = plt.gcf()
+    fig.savefig("2x2_anticorrelated.png")
+
+run_2x2_anticorrelated_experiment()
+
