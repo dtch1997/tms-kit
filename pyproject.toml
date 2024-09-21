@@ -2,9 +2,7 @@
 name = "tms"
 version = "0.1.0"
 description = "Toy models of superposition experiments"
-authors = [
-    {name = "Daniel Tan", email = "dtch1997@users.noreply.github.com"},
-]
+authors = [{ name = "Daniel Tan", email = "dtch1997@users.noreply.github.com" }]
 dependencies = [
     "torch>=2.4.1",
     "numpy>=2.1.1",
@@ -18,10 +16,13 @@ dependencies = [
     "rich>=13.8.1",
     "ipykernel>=6.29.5",
     "nbformat>=5.10.4",
+    "pytest>=8.3.3",
+    "pyright>=1.1.381",
+    "ruff>=0.6.7",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
-license = {text = "MIT"}
+license = { text = "MIT" }
 
 [build-system]
 requires = ["pdm-backend"]
@@ -30,3 +31,20 @@ build-backend = "pdm.backend"
 
 [tool.pdm]
 distribution = true
+
+[tool.ruff]
+line-length = 88
+lint.select = [
+    "E", # pycodestyle
+    "F", # pyflakes
+    "I",
+]
+exclude = ["third_party", ".venv"]
+lint.ignore = ["F841", "E501", "E741", "I001", "E731", "F722"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.semantic_release]
+version_variables = ["tms/__init__.py:__version__", "pyproject.toml:version"]
+branch = "main"

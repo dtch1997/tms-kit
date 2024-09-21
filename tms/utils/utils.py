@@ -1,11 +1,11 @@
-""" Miscellanous utility functions for visualizing TMS. 
+"""Miscellanous utility functions for visualizing TMS.
 
-Liberally copied from Callum's ARENA 3.0 repo here: https://github.com/callummcdougall/ARENA_3.0/blob/main/chapter1_transformer_interp/exercises/part31_superposition_and_saes/utils.py """
+Liberally copied from Callum's ARENA 3.0 repo here: https://github.com/callummcdougall/ARENA_3.0/blob/main/chapter1_transformer_interp/exercises/part31_superposition_and_saes/utils.py"""
 
 import json
 import math
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import einops
 import numpy as np
@@ -52,7 +52,9 @@ def plot_correlated_features(batch: Float[Tensor, "batch feats"], title: str):
             title=title,
             bargap=0.4,
             bargroupgap=0.0,
-            xaxis=dict(tickmode="array", tickvals=list(range(batch.squeeze().shape[0]))),
+            xaxis=dict(
+                tickmode="array", tickvals=list(range(batch.squeeze().shape[0]))
+            ),
             xaxis_title="Pairs of features",
             yaxis_title="Feature Values",
             height=400,
@@ -174,7 +176,9 @@ def plot_features_in_Nd(
         ).numpy()
 
     # Get titles (if they exist). Make sure titles only apply to the bar chart in each row
-    titles = ["Heatmap of " + ("W" if neuron_plot else "W<sup>T</sup>W")] * n_instances + [
+    titles = [
+        "Heatmap of " + ("W" if neuron_plot else "W<sup>T</sup>W")
+    ] * n_instances + [
         "Neuron weights<br>stacked bar plot" if neuron_plot else "Feature norms"
     ] * n_instances  # , ||W<sub>i</sub>||
     if subplot_titles is not None:
@@ -280,7 +284,8 @@ def plot_features_in_Nd(
     else:
         # Add annotation of "features" on the y-axis of the bar plot
         fig_indices = [
-            str(i) if i != 1 else "" for i in range(n_instances + 1, 2 * n_instances + 1)
+            str(i) if i != 1 else ""
+            for i in range(n_instances + 1, 2 * n_instances + 1)
         ]
         for inst in range(n_instances):
             fig.add_annotation(
@@ -350,7 +355,9 @@ def plot_features_in_Nd_discrete(
         "W<sub>2</sub>" for inst in range(n_instances)
     ]
 
-    fig = make_subplots(rows=2, cols=n_instances, subplot_titles=titles, vertical_spacing=0.1)
+    fig = make_subplots(
+        rows=2, cols=n_instances, subplot_titles=titles, vertical_spacing=0.1
+    )
     for inst in range(n_instances):
         for feat in range(n_feats):
             fig.add_trace(
@@ -464,7 +471,8 @@ def plot_features_in_2d(
             for i, colors_for_instance in enumerate(colors):
                 assert len(colors_for_instance) in (1, n_feats_list[i])
                 colors_list.append(
-                    colors_for_instance * (n_feats_list[i] if len(colors_for_instance) == 1 else 1)
+                    colors_for_instance
+                    * (n_feats_list[i] if len(colors_for_instance) == 1 else 1)
                 )
     elif isinstance(colors, Tensor):
         assert colors.shape == (n_instances, n_feats)
@@ -475,7 +483,9 @@ def plot_features_in_2d(
     axs = np.broadcast_to(axs, (n_rows, n_cols))
 
     # If there are titles, add more spacing for them
-    fig.subplots_adjust(bottom=0.2, top=(0.8 if title else 0.9), left=0.1, right=0.9, hspace=0.5)
+    fig.subplots_adjust(
+        bottom=0.2, top=(0.8 if title else 0.9), left=0.1, right=0.9, hspace=0.5
+    )
 
     # Initialize lines and markers
     for instance_idx, ((row, col), limits_per_instance) in enumerate(
@@ -565,9 +575,13 @@ def animate_features_in_2d(
     # Handle the different color cases, so we're left with a 3D list of strings
     if colors == "resample":
         if timestep == 1:
-            colors_array = cast_element_to_nested_list("black", (timestep, plots, datapoints))
+            colors_array = cast_element_to_nested_list(
+                "black", (timestep, plots, datapoints)
+            )
         else:
-            assert timestep > 1, "Timestep dimension must be greater than 1 for resample mode."
+            assert (
+                timestep > 1
+            ), "Timestep dimension must be greater than 1 for resample mode."
             euclidean_distances_diff = np.pad(
                 np.sqrt(np.sum((tensor[1:] - tensor[:-1]) ** 2, axis=-1)),
                 ((1, 0), (0, 0), (0, 0)),
@@ -583,10 +597,14 @@ def animate_features_in_2d(
             mask[: n_steps_to_highlight + 1, ...] = False  # don't highlight at start
             colors_array = np.where(mask[:, :, :, np.newaxis], "red", "black").tolist()
     elif colors is None:
-        colors_array = cast_element_to_nested_list("black", (timestep, plots, datapoints))
+        colors_array = cast_element_to_nested_list(
+            "black", (timestep, plots, datapoints)
+        )
     elif isinstance(colors, list):
         assert all(isinstance(c, str) for c in colors), "If list, expected 1D."
-        assert len(colors) == datapoints, "Colors list length must match the number of features."
+        assert (
+            len(colors) == datapoints
+        ), "Colors list length must match the number of features."
         colors_array = cast_element_to_nested_list(colors, (timestep, plots))
     elif isinstance(colors, Tensor):
         assert colors.shape == (
@@ -900,7 +918,9 @@ def frac_active_line_plot(
 ):
     if avg_window is not None:
         frac_active_flat = frac_active.detach().cpu().flatten().numpy()
-        frac_active_df = pd.DataFrame(data=frac_active_flat).rolling(window=avg_window).mean()
+        frac_active_df = (
+            pd.DataFrame(data=frac_active_flat).rolling(window=avg_window).mean()
+        )
         frac_active = t.from_numpy(frac_active_df.values).reshape(frac_active.shape)
 
     n_steps, n_instances, d_sae = frac_active.shape
@@ -943,10 +963,12 @@ def frac_active_line_plot(
     fig.show()
 
 
-def plot_feature_geometry(model: "Model", dim_fracs=None):
+def plot_feature_geometry(model: "Model", dim_fracs=None):  # noqa: F821
     fig = px.line(
         x=1 / model.feature_probability[:, 0].cpu(),
-        y=(model.cfg.d_hidden / (t.linalg.matrix_norm(model.W.detach(), "fro") ** 2)).cpu(),
+        y=(
+            model.cfg.d_hidden / (t.linalg.matrix_norm(model.W.detach(), "fro") ** 2)
+        ).cpu(),
         log_x=True,
         markers=True,
         template="ggplot2",
@@ -990,7 +1012,8 @@ def plot_feature_geometry(model: "Model", dim_fracs=None):
                 dx = xs[i + 1] - xs[i]
             fig.add_trace(
                 go.Scatter(
-                    x=1 / density[i] * np.ones(N) + dx * np.random.uniform(-0.1, 0.1, N),
+                    x=1 / density[i] * np.ones(N)
+                    + dx * np.random.uniform(-0.1, 0.1, N),
                     y=fracs_,
                     marker=dict(
                         color="black",
@@ -1002,7 +1025,9 @@ def plot_feature_geometry(model: "Model", dim_fracs=None):
             )
         fig.update_xaxes(showgrid=False)
         fig.update_yaxes(showgrid=False)
-        fig.update_layout(showlegend=False, yaxis_title_text="Dimensionality, or m/||W||_F^2")
+        fig.update_layout(
+            showlegend=False, yaxis_title_text="Dimensionality, or m/||W||_F^2"
+        )
     fig.show()
 
 
