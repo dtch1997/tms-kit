@@ -5,7 +5,18 @@ description = "Toy models of superposition experiments"
 authors = [
     {name = "Daniel Tan", email = "dtch1997@users.noreply.github.com"},
 ]
-dependencies = []
+dependencies = [
+    "torch>=2.4.1",
+    "numpy>=2.1.1",
+    "jaxtyping>=0.2.34",
+    "tqdm>=4.66.5",
+    "einops>=0.8.0",
+    "simple-parsing>=0.1.6",
+    "plotly>=5.24.1",
+    "pandas>=2.2.3",
+    "matplotlib>=3.9.2",
+    "rich>=13.8.1",
+]
 requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}
