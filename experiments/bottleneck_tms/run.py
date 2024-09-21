@@ -1,8 +1,14 @@
 """ Script to train and visualize a Toy Model of Superposition 
 
-Usage: Run as Jupyter cells using 'Run Below'
+Usage as script: 
+- Simply do `python experiments/bottleneck_tms/run.py`
+- Figures will be saved in the same directory as the script
+- Useful if you want to run all experiments at once and save the results
+
+Usage as Jupyter notebook:
 - The first cell defines all the necessary classes and functions
-- Each subsequent cell runs a different experiment and visualizes the results. It will also save the results as a .png file.
+- Each subsequent cell runs a different experiment and visualizes the results
+- Useful if you want to run each experiment separately and inspect the results
 """
 # %%
 import torch 
