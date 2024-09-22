@@ -32,16 +32,17 @@ red_grey_blue_cmap = LinearSegmentedColormap.from_list(
 
 Figure = Union[go.Figure, plt.Figure]
 
+
 def save_figure(fig: Figure, path: str | Path, format: str = "png"):
     # Parse the path
     if isinstance(path, str):
         path = Path(path)
-    
+
     # Save the figure
     if isinstance(fig, plt.Figure):
         if format in ("png", "jpeg", "webp", "svg", "pdf"):
             fig.savefig(path.with_suffix(f".{format}"))
-        else: 
+        else:
             raise ValueError(f"Unknown format {format}")
     else:
         if format in ("png", "jpeg", "webp", "svg", "pdf"):
@@ -533,6 +534,7 @@ def plot_features_in_2d(
 
     plt.show()
     return fig, axs
+
 
 def animate_features_in_2d(
     W: Float[Tensor, "*timesteps inst d_hidden feats"]

@@ -15,7 +15,6 @@ Usage as Jupyter notebook:
 # %%
 import torch
 import einops
-import matplotlib.pyplot as plt
 
 from dataclasses import dataclass
 from jaxtyping import Float
