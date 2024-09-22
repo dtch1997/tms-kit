@@ -90,15 +90,14 @@ def run_5_2_experiment():
     tms = BottleneckTMS(config)
 
     optimize(tms)
-    utils.plot_features_in_2d(
+    fig, ax = utils.plot_features_in_2d(
         tms.model.W,
         colors=feature_importance,
         title=f"Superposition: {n_features} features represented in 2D space",
         subplot_titles=[f"1 - S = {i:.3f}" for i in feature_probability[:, 0]],
     )
 
-    fig = plt.gcf()
-    fig.savefig("5_2_superposition.png")
+    utils.save_figure(fig, "5_2_superposition.png")
 
 
 run_5_2_experiment()
@@ -147,7 +146,7 @@ def run_100_20_experiment():
     tms = BottleneckTMS(config)
     optimize(tms)
 
-    utils.plot_features_in_Nd(
+    fig = utils.plot_features_in_Nd(
         tms.model.W,
         height=800,
         width=1600,
@@ -155,8 +154,7 @@ def run_100_20_experiment():
         subplot_titles=[f"Feature prob = {i:.3f}" for i in feature_probability[:, 0]],
     )
 
-    fig = plt.gcf()
-    fig.savefig("100_20_superposition.png")
+    utils.save_figure(fig, "100_20_superposition.png")
 
 
 run_100_20_experiment()
@@ -198,15 +196,14 @@ def run_2x2_correlated_experiment():
     )
 
     optimize(tms)
-    utils.plot_features_in_2d(
+    fig, _ = utils.plot_features_in_2d(
         tms.model.W,
         colors=["blue"] * 2 + ["limegreen"] * 2,
         title="Correlated feature sets are represented in local orthogonal bases",
         subplot_titles=[f"1 - S = {i:.3f}" for i in feature_probability[:, 0]],
     )
 
-    fig = plt.gcf()
-    fig.savefig("2x2_correlated.png")
+    utils.save_figure(fig, "2x2_correlated.png")
 
 
 run_2x2_correlated_experiment()
@@ -248,15 +245,14 @@ def run_2x2_anticorrelated_experiment():
     )
 
     optimize(tms)
-    utils.plot_features_in_2d(
+    fig, _ = utils.plot_features_in_2d(
         tms.model.W,
         colors=["blue"] * 2 + ["limegreen"] * 2,
         title="Anticorrelated feature sets are represented in antipodal pairs",
         subplot_titles=[f"1 - S = {i:.3f}" for i in feature_probability[:, 0]],
     )
 
-    fig = plt.gcf()
-    fig.savefig("2x2_anticorrelated.png")
+    utils.save_figure(fig, "2x2_anticorrelated.png")
 
 
 run_2x2_anticorrelated_experiment()

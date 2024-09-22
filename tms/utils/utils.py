@@ -5,7 +5,7 @@ Liberally copied from Callum's ARENA 3.0 repo here: https://github.com/callummcd
 import json
 import math
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Union
 
 import einops
 import numpy as np
@@ -29,6 +29,25 @@ red_grey_blue_cmap = LinearSegmentedColormap.from_list(
     "modified_coolwarm",
     np.vstack([np.linspace(red, light_grey, 128), np.linspace(light_grey, blue, 128)]),
 )
+
+Figure = Union[go.Figure, plt.Figure]
+
+def save_figure(fig: Figure, path: str | Path, format: str = "png"):
+    # Parse the path
+    if isinstance(path, str):
+        path = Path(path)
+    
+    # Save the figure
+    if isinstance(fig, plt.Figure):
+        if format in ("png", "jpeg", "webp", "svg", "pdf"):
+            fig.savefig(path.with_suffix(f".{format}"))
+        else: 
+            raise ValueError(f"Unknown format {format}")
+    else:
+        if format in ("png", "jpeg", "webp", "svg", "pdf"):
+            fig.write_image(str(path.with_suffix(f".{format}")))
+        else:
+            raise ValueError(f"Unknown format {format}")
 
 
 def cast_element_to_nested_list(elem, shape: tuple):
@@ -330,6 +349,7 @@ def plot_features_in_Nd(
     fig.update_yaxes(showticklabels=False, showgrid=False)
 
     fig.show()
+    return fig
 
 
 def plot_features_in_Nd_discrete(
@@ -512,7 +532,7 @@ def plot_features_in_2d(
             axs[row, col].set_title(subplot_titles[instance_idx], fontsize=12)
 
     plt.show()
-
+    return fig, axs
 
 def animate_features_in_2d(
     W: Float[Tensor, "*timesteps inst d_hidden feats"]

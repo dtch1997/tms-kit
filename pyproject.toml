@@ -19,6 +19,7 @@ dependencies = [
     "pytest>=8.3.3",
     "pyright>=1.1.381",
     "ruff>=0.6.7",
+    "kaleido!=0.2.1.post1",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
