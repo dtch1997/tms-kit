@@ -41,7 +41,7 @@ lint.select = [
     "F", # pyflakes
     "I",
 ]
-exclude = ["third_party", ".venv"]
+exclude = ["third_party", ".venv", "experiments"]
 lint.ignore = ["F841", "E501", "E741", "I001", "E731", "F722"]
 
 [tool.ruff.lint.flake8-tidy-imports]
