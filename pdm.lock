@@ -5,7 +5,7 @@
 groups = ["default"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:426e08f3ab7fa9d9c746bcad580bebcfb68d24373b1b98e69b04dc69458b9fff"
+content_hash = "sha256:ca235e8b0ea4d57f0a162783b69d5b0bd8844e4e1372cc1819fd5eefbe6f1c59"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -553,6 +553,23 @@ files = [
     {file = "kiwisolver-1.4.7-cp313-cp313-win_amd64.whl", hash = "sha256:8a3ec5aa8e38fc4c8af308917ce12c536f1c88452ce554027e55b22cbbfbff76"},
     {file = "kiwisolver-1.4.7-cp313-cp313-win_arm64.whl", hash = "sha256:76c8094ac20ec259471ac53e774623eb62e6e1f56cd8690c67ce6ce4fcb05650"},
     {file = "kiwisolver-1.4.7.tar.gz", hash = "sha256:9893ff81bd7107f7b685d3017cc6583daadb4fc26e4a888350df530e41980a60"},
+]
+
+[[package]]
+name = "lightning-utilities"
+version = "0.11.7"
+requires_python = ">=3.8"
+summary = "Lightning toolbox for across the our ecosystem."
+groups = ["default"]
+dependencies = [
+    "importlib-metadata>=4.0.0; python_version < \"3.8\"",
+    "packaging>=17.1",
+    "setuptools",
+    "typing-extensions",
+]
+files = [
+    {file = "lightning_utilities-0.11.7-py3-none-any.whl", hash = "sha256:84eebbc700edbfaa6c005458fc911a7fe7f99f02970b00cb322b4d2767deba98"},
+    {file = "lightning_utilities-0.11.7.tar.gz", hash = "sha256:7e8458a9f0bfb51ffe6c5ab3957aa37b2792fe8281dd9f1b66aa513a558ec4ce"},
 ]
 
 [[package]]
@@ -1531,6 +1548,24 @@ files = [
     {file = "torch-2.4.1-cp312-cp312-manylinux2014_aarch64.whl", hash = "sha256:18835374f599207a9e82c262153c20ddf42ea49bc76b6eadad8e5f49729f6e4d"},
     {file = "torch-2.4.1-cp312-cp312-win_amd64.whl", hash = "sha256:ebea70ff30544fc021d441ce6b219a88b67524f01170b1c538d7d3ebb5e7f56c"},
     {file = "torch-2.4.1-cp312-none-macosx_11_0_arm64.whl", hash = "sha256:72b484d5b6cec1a735bf3fa5a1c4883d01748698c5e9cfdbeb4ffab7c7987e0d"},
+]
+
+[[package]]
+name = "torchmetrics"
+version = "1.4.2"
+requires_python = ">=3.8"
+summary = "PyTorch native Metrics"
+groups = ["default"]
+dependencies = [
+    "lightning-utilities>=0.8.0",
+    "numpy>1.20.0",
+    "packaging>17.1",
+    "torch>=1.10.0",
+    "typing-extensions; python_version < \"3.9\"",
+]
+files = [
+    {file = "torchmetrics-1.4.2-py3-none-any.whl", hash = "sha256:87b9eca51ff6f93985a0f9db509f646cb45425b016f4d2f383d8c28d40dde5b6"},
+    {file = "torchmetrics-1.4.2.tar.gz", hash = "sha256:7a40cbec85e5645090812b87601696b4adf158294ec8c407ae58a71710938b87"},
 ]
 
 [[package]]

@@ -123,7 +123,7 @@ def optimize_vanilla_sae(
         # Calculate acts
         acts = sae.encode(h)
         h_reconstructed = sae.decode(acts)
-        loss, _ = sae.loss(h, acts, h_reconstructed, l1_coeff=l1_coeff)
+        loss, info_dict = sae.loss(h, acts, h_reconstructed, l1_coeff=l1_coeff)
 
         loss.backward()
         optimizer.step()
@@ -138,7 +138,7 @@ def optimize_vanilla_sae(
             progress_bar.set_postfix(
                 lr=step_lr,
                 frac_active=frac_active.mean().item(),
-                **{k: v.mean(0).sum().item() for k, v in loss_dict.items()},  # type: ignore
+                **{k: v.mean(0).sum().item() for k, v in info_dict.items()},  # type: ignore
             )
             data_log["W_enc"].append(sae.W_enc.detach().cpu().clone())
             data_log["W_dec"].append(sae.W_dec.detach().cpu().clone())

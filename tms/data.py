@@ -124,6 +124,7 @@ class AnticorrelatedFeatureGenerator(DataGenerator):
         return torch.where(feat_is_present, feat_mag, 0.0)
 
 class ModelActivationsGenerator:
+    """ Generates intermediate activations from a model """
 
     def __init__(self, model: Model, data_gen: DataGenerator):
         self.model = model
