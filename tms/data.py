@@ -9,6 +9,7 @@ from torch import Tensor
 from tms.model import Model
 from tms.utils.device import get_device
 
+
 class DataGenerator(ABC):
     n_features: int
     n_inst: int
@@ -123,18 +124,15 @@ class AnticorrelatedFeatureGenerator(DataGenerator):
         )
         return torch.where(feat_is_present, feat_mag, 0.0)
 
+
 class ModelActivationsGenerator:
-    """ Generates intermediate activations from a model """
+    """Generates intermediate activations from a model"""
 
     def __init__(self, model: Model, data_gen: DataGenerator):
         self.model = model
         self.data_gen = data_gen
 
     @torch.no_grad()
-    def generate_batch(
-        self, 
-        batch_size: int
-    ) -> Float[Tensor, "... inst feats"]:
+    def generate_batch(self, batch_size: int) -> Float[Tensor, "... inst feats"]:
         orig_batch = self.data_gen.generate_batch(batch_size)
         return self.model.encode(orig_batch)
-

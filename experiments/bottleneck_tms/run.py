@@ -40,6 +40,7 @@ from tms.sae import VanillaSAE
 MAIN = __name__ == "__main__"
 DIR = pathlib.Path(__file__).parent
 
+
 @dataclass
 class BottleneckTMSConfig:
     d_hidden: int
@@ -103,6 +104,7 @@ def run_5_2_experiment():
 
     utils.save_figure(fig, "5_2_superposition.png")
 
+
 if MAIN:
     run_5_2_experiment()
 
@@ -160,6 +162,7 @@ def run_100_20_experiment():
 
     utils.save_figure(fig, "100_20_superposition.png")
 
+
 if MAIN:
     run_100_20_experiment()
 
@@ -208,6 +211,7 @@ def run_2x2_correlated_experiment():
     )
 
     utils.save_figure(fig, "2x2_correlated.png")
+
 
 if MAIN:
     run_2x2_correlated_experiment()
@@ -258,12 +262,14 @@ def run_2x2_anticorrelated_experiment():
 
     utils.save_figure(fig, "2x2_anticorrelated.png")
 
+
 if MAIN:
     run_2x2_anticorrelated_experiment()
 # %%
 
+
 def run_tms_sae_no_resampling():
-    """ Train an SAE on TMS without resampling """
+    """Train an SAE on TMS without resampling"""
     device = get_device()
     d_hidden = d_in = 2
     n_features = d_sae = 5
@@ -287,7 +293,7 @@ def run_tms_sae_no_resampling():
         feature_importance=feature_importance,
     )
     tms = BottleneckTMS(config)
-    optimize(tms, steps = 1000)
+    optimize(tms, steps=1000)
 
     # Train the SAE
     sae = VanillaSAE(n_inst, d_in, d_sae, device=device)
@@ -311,7 +317,8 @@ def run_tms_sae_no_resampling():
         title="SAE on toy model",
     )
 
+
 if MAIN:
-    # NOTE: Not rendering for some reason... 
+    # NOTE: Not rendering for some reason...
     run_tms_sae_no_resampling()
 # %%

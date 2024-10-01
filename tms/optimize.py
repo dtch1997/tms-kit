@@ -59,6 +59,7 @@ def optimize(
 
     return None
 
+
 def optimize_vanilla_sae(
     sae: VanillaSAE,
     data_gen: ModelActivationsGenerator,
@@ -104,7 +105,9 @@ def optimize_vanilla_sae(
     for step in progress_bar:
         # Resample dead latents
         if (resample_method is not None) and ((step + 1) % resample_freq == 0):
-            frac_active_in_window = torch.stack(frac_active_list[-resample_window:], dim=0)
+            frac_active_in_window = torch.stack(
+                frac_active_list[-resample_window:], dim=0
+            )
             # TODO: implement
             if resample_method == "simple":
                 sae.resample_simple(frac_active_in_window, resample_scale)
@@ -146,4 +149,3 @@ def optimize_vanilla_sae(
             data_log["steps"].append(step)
 
     return data_log
- 

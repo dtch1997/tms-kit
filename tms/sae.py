@@ -10,11 +10,11 @@ import torch
 import torch.nn.functional as F
 from torch.distributions import Categorical
 
-class SAE(nn.Module, ABC):
 
+class SAE(nn.Module, ABC):
     @abstractmethod
     def encode(self, x):
-        pass 
+        pass
 
     @abstractmethod
     def decode(self, z):
@@ -24,13 +24,13 @@ class SAE(nn.Module, ABC):
         z = self.encode(x)
         x_recon = self.decode(z)
         return x_recon
-    
+
     def loss(
-        self, 
-        h: Float[Tensor, "... inst d_in"], 
-        sae_act: Float[Tensor, "... inst d_sae"], 
+        self,
+        h: Float[Tensor, "... inst d_in"],
+        sae_act: Float[Tensor, "... inst d_sae"],
         h_recon: Float[Tensor, "... inst d_in"],
-        l1_coeff: float = 1e-3
+        l1_coeff: float = 1e-3,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         # Compute loss terms
         L_reconstruction = (h_recon - h).pow(2).mean(-1)
@@ -44,7 +44,6 @@ class SAE(nn.Module, ABC):
 
 
 class VanillaSAE(SAE):
-
     n_inst: int
     d_in: int
     d_sae: int
@@ -55,16 +54,17 @@ class VanillaSAE(SAE):
     b_enc: Float[Tensor, "inst d_sae"]
     b_dec: Float[Tensor, "inst d_in"]
 
-    def __init__(self, 
-        n_inst: int, 
-        d_in: int, 
+    def __init__(
+        self,
+        n_inst: int,
+        d_in: int,
         d_sae: int,
         weight_normalize_eps: float = 1e-8,
         tied_weights: bool = False,
         architecture: Literal["standard", "gated"] = "standard",
-        device = None
+        device=None,
     ):
-        if device is None: 
+        if device is None:
             device = get_device()
         super(SAE, self).__init__()
         self.n_inst = n_inst
@@ -78,8 +78,11 @@ class VanillaSAE(SAE):
             nn.init.kaiming_uniform_(torch.empty((n_inst, d_in, d_sae)))
         )
         self._W_dec = (
-            None if tied_weights
-            else nn.Parameter(nn.init.kaiming_uniform_(torch.empty((n_inst, d_sae, d_in))))
+            None
+            if tied_weights
+            else nn.Parameter(
+                nn.init.kaiming_uniform_(torch.empty((n_inst, d_sae, d_in)))
+            )
         )
         self.b_enc = nn.Parameter(torch.zeros(n_inst, d_sae))
         self.b_dec = nn.Parameter(torch.zeros(n_inst, d_in))
@@ -94,19 +97,31 @@ class VanillaSAE(SAE):
     def W_dec_normalized(self) -> Float[Tensor, "inst d_sae d_in"]:
         """Returns decoder weights, normalized over the autoencoder input dimension."""
         return self.W_dec / self.W_dec.norm(dim=-1, keepdim=True)
-    
-    def encode(self, x: Float[Tensor, "... inst d_in"]) -> Float[Tensor, "... inst d_sae"]:
+
+    def encode(
+        self, x: Float[Tensor, "... inst d_in"]
+    ) -> Float[Tensor, "... inst d_sae"]:
         x_cent = x - self.b_dec
-        pre_acts = einops.einsum(
-            x_cent, self.W_enc, "... inst d_in, inst d_in d_sae -> ... inst d_sae"
-        ) + self.b_enc
+        pre_acts = (
+            einops.einsum(
+                x_cent, self.W_enc, "... inst d_in, inst d_in d_sae -> ... inst d_sae"
+            )
+            + self.b_enc
+        )
         return F.relu(pre_acts)
 
-    def decode(self, z: Float[Tensor, "... inst d_sae"]) -> Float[Tensor, "... inst d_in"]:
-        return einops.einsum(
-            z, self.W_dec_normalized, "... inst d_sae, inst d_sae d_in -> ... inst d_in"
-        ) + self.b_dec
-    
+    def decode(
+        self, z: Float[Tensor, "... inst d_sae"]
+    ) -> Float[Tensor, "... inst d_in"]:
+        return (
+            einops.einsum(
+                z,
+                self.W_dec_normalized,
+                "... inst d_sae, inst d_sae d_in -> ... inst d_in",
+            )
+            + self.b_dec
+        )
+
     @torch.no_grad()
     def resample_simple(
         self,
@@ -124,7 +139,9 @@ class VanillaSAE(SAE):
         This function performs resampling over all instances at once, using batched operations.
         """
         # Get a tensor of dead latents
-        dead_latents_mask = (frac_active_in_window < 1e-8).all(dim=0)  # [instances d_sae]
+        dead_latents_mask = (frac_active_in_window < 1e-8).all(
+            dim=0
+        )  # [instances d_sae]
         n_dead = int(dead_latents_mask.int().sum().item())
 
         # Get our random replacement values of shape [n_dead d_in], and scale them
@@ -134,7 +151,9 @@ class VanillaSAE(SAE):
         )
 
         # Change the corresponding values in W_enc, W_dec, and b_enc
-        self.W_enc.data.transpose(-1, -2)[dead_latents_mask] = resample_scale * replacement_values_normed
+        self.W_enc.data.transpose(-1, -2)[dead_latents_mask] = (
+            resample_scale * replacement_values_normed
+        )
         self.W_dec.data[dead_latents_mask] = replacement_values_normed
         self.b_enc.data[dead_latents_mask] = 0.0
 
@@ -173,13 +192,18 @@ class VanillaSAE(SAE):
                 continue  # If we have zero reconstruction loss, we don't need to resample
 
             # Draw `d_sae` samples from [0, 1, ..., batch_size-1], with probabilities proportional to l2_loss
-            distn = Categorical(probs=l2_loss_instance.pow(2) / l2_loss_instance.pow(2).sum())
+            distn = Categorical(
+                probs=l2_loss_instance.pow(2) / l2_loss_instance.pow(2).sum()
+            )
             replacement_indices = distn.sample((n_dead,))  # type: ignore
 
             # Index into the batch of hidden activations to get our replacement values
-            replacement_values = (h - self.b_dec)[replacement_indices, instance]  # [n_dead d_in]
+            replacement_values = (h - self.b_dec)[
+                replacement_indices, instance
+            ]  # [n_dead d_in]
             replacement_values_normalized = replacement_values / (
-                replacement_values.norm(dim=-1, keepdim=True) + self.weight_normalize_eps
+                replacement_values.norm(dim=-1, keepdim=True)
+                + self.weight_normalize_eps
             )
 
             # Get the norm of alive neurons (or 1.0 if there are no alive neurons)

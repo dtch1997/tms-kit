@@ -4,24 +4,21 @@ import einops
 
 from dataclasses import dataclass
 from jaxtyping import Float
-from typing import Type
 
-from tms.data import (
-    DataGenerator, ModelActivationsGenerator
-)
+from tms.data import DataGenerator, ModelActivationsGenerator
 from tms.loss import ImportanceWeightedLoss
 from tms.model import Model
 from tms.optimize import optimize, optimize_vanilla_sae
 from tms.tms import TMS
 from tms.utils.device import get_device
 from tms.utils import utils
-from tms.utils.plotly import line
 from tms.sae import VanillaSAE
 
 MAIN = __name__ == "__main__"
 
+
 class HierarchicalFeatureGenerator(DataGenerator):
-    """ Generates features where odd-indexed features can only occur if odd features occur """
+    """Generates features where odd-indexed features can only occur if odd features occur"""
 
     def generate_batch(self, batch_size: int) -> torch.Tensor:
         """
@@ -35,7 +32,7 @@ class HierarchicalFeatureGenerator(DataGenerator):
         # E.g feature 3 can only occur if feature 2 is non-zero
         feat_vals[..., 1::2] *= (feat_vals[..., 0::2] > 0).float()
         return feat_vals
-        
+
 
 @dataclass
 class FeatureAbsorptionTMSConfig:
@@ -58,12 +55,14 @@ class FeatureAbsorptionTMS(TMS):
         super().__init__(model, data_gen, loss_calc)
         self.config = config
 
+
 # Helper function to plot pairwise cosine similarities
 
-from torch import Tensor 
+from torch import Tensor
 from torchmetrics.functional import pairwise_cosine_similarity
 import numpy as np
 import matplotlib.pyplot as plt
+
 
 def plot_W_pairwise_cos_sim_in_2d(
     W: Float[Tensor, "inst d_hidden feats"] | list[Float[Tensor, "d_hidden feats"]],
@@ -129,7 +128,9 @@ def plot_W_pairwise_cos_sim_in_2d(
                 )
     elif isinstance(colors, Tensor):
         assert colors.shape == (n_instances, n_feats)
-        colors_list = [[utils.get_viridis(v) for v in color] for color in colors.tolist()]
+        colors_list = [
+            [utils.get_viridis(v) for v in color] for color in colors.tolist()
+        ]
 
     # Create a figure and axes, and make sure axs is a 2D array
     fig, axs = plt.subplots(n_rows, n_cols, figsize=(2.5 * n_cols, 2.5 * n_rows))
@@ -155,13 +156,13 @@ def plot_W_pairwise_cos_sim_in_2d(
             fig.suptitle(title, fontsize=15)
         if subplot_titles:
             axs[row, col].set_title(subplot_titles[instance_idx], fontsize=12)
-            
 
     # Add a colorbar
     cbar = fig.colorbar(axs[0, 0].images[0], ax=axs, orientation="horizontal")
 
     plt.show()
     return fig, axs
+
 
 # %%
 
@@ -197,7 +198,7 @@ tms = FeatureAbsorptionTMS(config)
 # Print some statistics from the data
 data = tms.data_gen.generate_batch(1000)
 print("Data marginal statistics: ")
-print((data > 0).float().mean(dim = (0, 1)))
+print((data > 0).float().mean(dim=(0, 1)))
 print()
 
 optimize(tms)
@@ -230,12 +231,13 @@ utils.save_figure(fig, "sae_latents.png")
 # Plot the cos sims of the SAE decoder weight and the true model decoder weights
 
 # %%
-W_dec_normalized_reshaped = einops.rearrange(sae.W_dec_normalized, "inst d_sae d_hidden -> inst d_hidden d_sae")
+W_dec_normalized_reshaped = einops.rearrange(
+    sae.W_dec_normalized, "inst d_sae d_hidden -> inst d_hidden d_sae"
+)
 
 # NOTE: Model W: [inst, d_hidden, n_feats] → W[0, :, 0] is the embedding for a feature
 # NOTE: SAE W_dec: [inst, d_hidden, d_sae] → W_dec[0, :, 0] is the embedding for an SAE latent
 
-from torch import vmap
 
 def pairwise_cosine_similarity(
     A: Float[Tensor, "N d"],
@@ -246,19 +248,20 @@ def pairwise_cosine_similarity(
     B_normalized = B / B.norm(dim=-1, keepdim=True)
     return A_normalized @ B_normalized.T
 
+
 def get_instancewise_pairwise_cos_sim(
     W1: Float[Tensor, "inst d_hidden feats1"],
     W2: Float[Tensor, "inst d_hidden feats2"],
 ) -> Float[Tensor, "inst feats1 feats2"]:
-
     output = torch.empty((W1.shape[0], W1.shape[2], W2.shape[2]))
     for i in range(W1.shape[0]):
         output[i] = pairwise_cosine_similarity(W1[i].T, W2[i].T)
     return output
 
+
 # %%
 def plot_pairwise_cos_sim(
-    W1: Float[Tensor, "inst d_hidden feats1"], 
+    W1: Float[Tensor, "inst d_hidden feats1"],
     W2: Float[Tensor, "inst d_hidden feats2"],
     title: str | None = None,
 ):
@@ -281,14 +284,21 @@ def plot_pairwise_cos_sim(
     fig.colorbar(ax[0].images[0], ax=ax, orientation="horizontal")
     return fig
 
+
 # %%
 
-fig = plot_pairwise_cos_sim(sae.W_enc, tms.model.W, title="SAE Encoder to model cosine similarities")
+fig = plot_pairwise_cos_sim(
+    sae.W_enc, tms.model.W, title="SAE Encoder to model cosine similarities"
+)
 utils.save_figure(fig, "sae_enc_to_model_cos_sim.png")
 
 # %%
 
-fig = plot_pairwise_cos_sim(W_dec_normalized_reshaped, tms.model.W, title="SAE Decoder to model cosine similarities")
+fig = plot_pairwise_cos_sim(
+    W_dec_normalized_reshaped,
+    tms.model.W,
+    title="SAE Decoder to model cosine similarities",
+)
 utils.save_figure(fig, "sae_dec_to_model_cos_sim.png")
 
 # %%

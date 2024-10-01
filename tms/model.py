@@ -50,12 +50,16 @@ class Model(nn.Module):
         self.n_features = n_features
         self.d_hidden = d_hidden
 
-    def encode(self, features: Float[Tensor, "... inst feats"]) -> Float[Tensor, "... inst hidden"]:
+    def encode(
+        self, features: Float[Tensor, "... inst feats"]
+    ) -> Float[Tensor, "... inst hidden"]:
         return einops.einsum(
             features, self.W, "... inst feats, inst hidden feats -> ... inst hidden"
         )
-    
-    def decode(self, hidden: Float[Tensor, "... inst hidden"]) -> Float[Tensor, "... inst feats"]:
+
+    def decode(
+        self, hidden: Float[Tensor, "... inst hidden"]
+    ) -> Float[Tensor, "... inst feats"]:
         out = einops.einsum(
             hidden, self.W, "... inst hidden, inst hidden feats -> ... inst feats"
         )
