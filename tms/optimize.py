@@ -4,9 +4,12 @@ import torch
 import numpy as np
 
 from typing import Callable
+from typing import Literal
 from tqdm import tqdm
 
 from tms.tms import TMS
+from tms.sae import VanillaSAE
+from tms.data import ModelActivationsGenerator
 
 
 def linear_lr(step, steps):
@@ -55,3 +58,100 @@ def optimize(
             progress_bar.set_postfix(loss=loss.item() / tms.model.n_inst, lr=step_lr)
 
     return None
+
+def optimize_vanilla_sae(
+    sae: VanillaSAE,
+    data_gen: ModelActivationsGenerator,
+    *,
+    l1_coeff: float = 1e-3,
+    batch_size: int = 1024,
+    steps: int = 10_000,
+    log_freq: int = 50,
+    lr: float = 1e-3,
+    lr_scale: Callable[[int, int], float] = constant_lr,
+    resample_method: Literal["simple", "advanced", None] = None,
+    resample_freq: int = 2500,
+    resample_window: int = 500,
+    resample_scale: float = 0.5,
+) -> dict[str, list]:
+    """
+    Optimizes the autoencoder using the given hyperparameters.
+
+    Args:
+        model:              we reconstruct features from model's hidden activations
+        batch_size:         size of batches we pass through model & train autoencoder on
+        steps:              number of optimization steps
+        log_freq:           number of optimization steps between logging
+        lr:                 learning rate
+        lr_scale:           learning rate scaling function
+        resample_method:    method for resampling dead latents
+        resample_freq:      number of optimization steps between resampling dead latents
+        resample_window:    number of steps needed for us to classify a neuron as dead
+        resample_scale:     scale factor for resampled neurons
+
+    Returns:
+        data_log:               dictionary containing data we'll use for visualization
+    """
+    assert resample_window <= resample_freq
+
+    optimizer = torch.optim.Adam(list(sae.parameters()), lr=lr, betas=(0.0, 0.999))
+    frac_active_list = []
+    progress_bar = tqdm(range(steps))
+
+    # Create lists to store data we'll eventually be plotting
+    data_log = {"steps": [], "W_enc": [], "W_dec": [], "frac_active": []}
+
+    for step in progress_bar:
+        # Resample dead latents
+        if (resample_method is not None) and ((step + 1) % resample_freq == 0):
+            frac_active_in_window = torch.stack(frac_active_list[-resample_window:], dim=0)
+            # TODO: implement
+            if resample_method == "simple":
+                sae.resample_simple(frac_active_in_window, resample_scale)
+            elif resample_method == "advanced":
+                sae.resample_advanced(frac_active_in_window, resample_scale, batch_size)
+
+        # Update learning rate
+        step_lr = lr * lr_scale(step, steps)
+        for group in optimizer.param_groups:
+            group["lr"] = step_lr
+
+        # Get a batch of hidden activations from the model
+        with torch.inference_mode():
+            h = data_gen.generate_batch(batch_size)
+
+        # Calculate acts
+        acts = sae.encode(h)
+        h_reconstructed = sae.decode(acts)
+
+        # Compute loss terms
+        L_reconstruction = (h_reconstructed - h).pow(2).mean(-1)
+        L_sparsity = acts.abs().sum(-1)
+        loss_dict = {
+            "L_reconstruction": L_reconstruction,
+            "L_sparsity": L_sparsity,
+        }
+        loss = (L_reconstruction + l1_coeff * L_sparsity).mean(0).sum()
+
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+
+        # Calculate the mean sparsities over batch dim for each feature
+        frac_active = (acts.abs() > 1e-8).float().mean(0)
+        frac_active_list.append(frac_active)
+
+        # Display progress bar, and append new values for plotting
+        if step % log_freq == 0 or (step + 1 == steps):
+            progress_bar.set_postfix(
+                lr=step_lr,
+                frac_active=frac_active.mean().item(),
+                **{k: v.mean(0).sum().item() for k, v in loss_dict.items()},  # type: ignore
+            )
+            data_log["W_enc"].append(sae.W_enc.detach().cpu().clone())
+            data_log["W_dec"].append(sae.W_dec.detach().cpu().clone())
+            data_log["frac_active"].append(frac_active.detach().cpu().clone())
+            data_log["steps"].append(step)
+
+    return data_log
+ 

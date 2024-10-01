@@ -6,8 +6,8 @@ import einops
 from abc import ABC, abstractmethod
 from jaxtyping import Float
 from torch import Tensor
+from tms.model import Model
 from tms.utils.device import get_device
-
 
 class DataGenerator(ABC):
     n_features: int
@@ -122,3 +122,18 @@ class AnticorrelatedFeatureGenerator(DataGenerator):
             "pair batch instances features -> batch instances (features pair)",
         )
         return torch.where(feat_is_present, feat_mag, 0.0)
+
+class ModelActivationsGenerator:
+
+    def __init__(self, model: Model, data_gen: DataGenerator):
+        self.model = model
+        self.data_gen = data_gen
+
+    @torch.no_grad()
+    def generate_batch(
+        self, 
+        batch_size: int
+    ) -> Float[Tensor, "... inst feats"]:
+        orig_batch = self.data_gen.generate_batch(batch_size)
+        return self.model.encode(orig_batch)
+
