@@ -123,15 +123,7 @@ def optimize_vanilla_sae(
         # Calculate acts
         acts = sae.encode(h)
         h_reconstructed = sae.decode(acts)
-
-        # Compute loss terms
-        L_reconstruction = (h_reconstructed - h).pow(2).mean(-1)
-        L_sparsity = acts.abs().sum(-1)
-        loss_dict = {
-            "L_reconstruction": L_reconstruction,
-            "L_sparsity": L_sparsity,
-        }
-        loss = (L_reconstruction + l1_coeff * L_sparsity).mean(0).sum()
+        loss, _ = sae.loss(h, acts, h_reconstructed, l1_coeff=l1_coeff)
 
         loss.backward()
         optimizer.step()
