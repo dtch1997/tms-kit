@@ -113,7 +113,7 @@ class VanillaSAE(SAE):
         return (
             einops.einsum(
                 z,
-                self.W_dec,
+                self.W_dec_normalized,
                 "... inst d_sae, inst d_sae d_in -> ... inst d_in",
             )
             + self.b_dec
