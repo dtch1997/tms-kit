@@ -1,4 +1,17 @@
 # %%
+"""Script to train and visualize feature absorption in a Toy Model of Superposition
+
+Usage as script:
+- Simply do `python experiments/feature_absorption/run.py`
+- Figures will be saved in the same directory as the script
+- Useful if you want to run all experiments at once and save the results
+
+Usage as Jupyter notebook:
+- This cell defines all the necessary classes and functions
+- Each subsequent cell runs a different experiment and visualizes the results
+- Useful if you want to run each experiment separately and inspect the results
+"""
+
 import torch
 import einops
 
@@ -27,8 +40,21 @@ from rich.text import Text
 
 MAIN = __name__ == "__main__"
 
+class IIDConstantFeatureGenerator(DataGenerator):
+    """Generates features where all features are constant"""
 
-class HierarchicalFeatureGenerator(DataGenerator):
+    def generate_batch(self, batch_size: int) -> torch.Tensor:
+        """
+        Generates a batch of data.
+        """
+        batch_shape = (batch_size, self.n_inst, self.n_features)
+        feat_seeds = torch.rand(batch_shape, device=get_device())
+        # NOTE: Magnitude fixed to be 1
+        feat_mag = torch.ones(batch_shape, device=get_device())
+        feat_vals = torch.where(feat_seeds <= self.feature_probability, feat_mag, 0.0)
+        return feat_vals
+
+class HierarchicalConstantFeatureGenerator(DataGenerator):
     """Generates features where feature 1 can only occur if feature 0 occurs"""
 
     def generate_batch(self, batch_size: int) -> torch.Tensor:
@@ -36,7 +62,8 @@ class HierarchicalFeatureGenerator(DataGenerator):
         Generates a batch of data.
         """
         batch_shape = (batch_size, self.n_inst, self.n_features)
-        feat_mag = torch.rand(batch_shape, device=get_device())
+        # NOTE: Magnitude fixed to be 1
+        feat_mag = torch.ones(batch_shape, device=get_device())
         feat_seeds = torch.rand(batch_shape, device=get_device())
         feat_vals = torch.where(feat_seeds <= self.feature_probability, feat_mag, 0.0)
         # Feature 1 can only occur if feature 0 occurs
@@ -325,7 +352,7 @@ def run_iid_experiment():
         n_features=n_features,
         feature_probability=feature_probability,
         feature_importance=feature_importance,
-        data_gen_cls=IIDFeatureGenerator
+        data_gen_cls=IIDConstantFeatureGenerator
     )
     run_experiment(config, expt_prefix="iid")
 
@@ -358,7 +385,7 @@ def run_hierarchical_experiment():
         n_features=n_features,
         feature_probability=feature_probability,
         feature_importance=feature_importance,
-        data_gen_cls=HierarchicalFeatureGenerator
+        data_gen_cls=HierarchicalConstantFeatureGenerator
     )
     run_experiment(config, expt_prefix="hrch")
 
