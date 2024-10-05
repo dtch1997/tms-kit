@@ -76,7 +76,7 @@ class VanillaSAE(SAE):
     @property
     def W_dec_normalized(self) -> Float[Tensor, "inst d_sae d_in"]:
         """Returns decoder weights, normalized over the autoencoder input dimension."""
-        return self.W_dec / self.W_dec.norm(dim=-1, keepdim=True)
+        return self.W_dec / (self.W_dec.norm(dim=-1, keepdim=True) + self.weight_normalize_eps)
 
     def encode(
         self, x: Float[Tensor, "... inst d_in"]
