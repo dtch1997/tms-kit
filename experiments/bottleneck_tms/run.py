@@ -274,11 +274,13 @@ def run_tms_sae_no_resampling():
     n_features = d_sae = 5
     n_inst = 8
 
-    feature_probability = (50 ** -torch.linspace(0, 1, n_inst)).to(device)
+    # NOTE: In the notebook, prob and importance weren't specified
+    # So they use the defaults here: https://arena3-chapter1-transformer-interp.streamlit.app/[1.3.1]_Superposition_&_SAEs#exercise-implement-forward
+    feature_probability = (0.01 * torch.ones(n_inst)).to(device)
     feature_probability = einops.repeat(
         feature_probability, "inst -> inst feats", feats=n_features
     )
-    feature_importance = (0.9 ** torch.arange(n_features)).to(device)
+    feature_importance = (torch.ones(n_features)).to(device)
     feature_importance = einops.repeat(
         feature_importance, "feats -> inst feats", inst=n_inst
     )
@@ -293,6 +295,16 @@ def run_tms_sae_no_resampling():
     )
     tms = BottleneckTMS(config)
     optimize(tms)
+
+    # visualize the TMS for debugging purposes
+    fig, _ = utils.plot_features_in_2d(
+        tms.model.W,
+        colors=feature_importance,
+        title=f"Superposition: {n_features} features represented in 2D space",
+        subplot_titles=[f"1 - S = {i:.3f}" for i in feature_probability[:, 0]],
+    )
+    utils.save_figure(fig, "debug/tms_sae_no_resample_tms_features.png")
+
 
     # Train the SAE
     sae = VanillaSAE(n_inst, d_in, d_sae, device=device)
@@ -327,11 +339,11 @@ def run_tms_sae_simple_resampling():
     n_features = d_sae = 5
     n_inst = 8
 
-    feature_probability = (50 ** -torch.linspace(0, 1, n_inst)).to(device)
+    feature_probability = (0.01 * torch.ones(n_inst)).to(device)
     feature_probability = einops.repeat(
         feature_probability, "inst -> inst feats", feats=n_features
     )
-    feature_importance = (0.9 ** torch.arange(n_features)).to(device)
+    feature_importance = (torch.ones(n_features)).to(device)
     feature_importance = einops.repeat(
         feature_importance, "feats -> inst feats", inst=n_inst
     )
@@ -346,6 +358,15 @@ def run_tms_sae_simple_resampling():
     )
     tms = BottleneckTMS(config)
     optimize(tms)
+
+    # visualize the TMS for debugging purposes
+    fig, _ = utils.plot_features_in_2d(
+        tms.model.W,
+        colors=feature_importance,
+        title=f"Superposition: {n_features} features represented in 2D space",
+        subplot_titles=[f"1 - S = {i:.3f}" for i in feature_probability[:, 0]],
+    )
+    utils.save_figure(fig, "debug/tms_sae_simple_resample_tms_features.png")
 
     # Train the SAE
     sae = VanillaSAE(n_inst, d_in, d_sae, device=device)

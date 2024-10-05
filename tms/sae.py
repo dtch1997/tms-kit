@@ -113,7 +113,7 @@ class VanillaSAE(SAE):
         return (
             einops.einsum(
                 z,
-                self.W_dec_normalized,
+                self.W_dec,
                 "... inst d_sae, inst d_sae d_in -> ... inst d_in",
             )
             + self.b_dec
@@ -124,6 +124,7 @@ class VanillaSAE(SAE):
         self,
         frac_active_in_window: Float[Tensor, "window inst d_sae"],
         resample_scale: float,
+        threshold: float = 1e-8,
     ) -> None:
         """
         Resamples dead latents, by modifying the model's weights and biases inplace.
@@ -136,7 +137,7 @@ class VanillaSAE(SAE):
         This function performs resampling over all instances at once, using batched operations.
         """
         # Get a tensor of dead latents
-        dead_latents_mask = (frac_active_in_window < 1e-8).all(
+        dead_latents_mask = (frac_active_in_window < threshold).all(
             dim=0
         )  # [instances d_sae]
         n_dead = int(dead_latents_mask.int().sum().item())
@@ -172,47 +173,50 @@ class VanillaSAE(SAE):
 
         Returns colors and titles (useful for creating the animation: resampled neurons appear in red).
         """
-        h = self.generate_batch(batch_size)
-        l2_loss = self.forward(h)[0]["L_reconstruction"]
 
-        for instance in range(self.n_inst):
-            # Find the dead latents in this instance. If all latents are alive, continue
-            is_dead = (frac_active_in_window[:, instance] < 1e-8).all(dim=0)
-            dead_latents = torch.nonzero(is_dead).squeeze(-1)
-            n_dead = dead_latents.numel()
-            if n_dead == 0:
-                continue  # If we have no dead features, then we don't need to resample
+        raise NotImplementedError("Advanced resampling not yet implemented")
+    
+    #     h = self.generate_batch(batch_size)
+    #     l2_loss = self.forward(h)[0]["L_reconstruction"]
 
-            # Compute L2 loss for each element in the batch
-            l2_loss_instance = l2_loss[:, instance]  # [batch_size]
-            if l2_loss_instance.max() < 1e-6:
-                continue  # If we have zero reconstruction loss, we don't need to resample
+    #     for instance in range(self.n_inst):
+    #         # Find the dead latents in this instance. If all latents are alive, continue
+    #         is_dead = (frac_active_in_window[:, instance] < 1e-8).all(dim=0)
+    #         dead_latents = torch.nonzero(is_dead).squeeze(-1)
+    #         n_dead = dead_latents.numel()
+    #         if n_dead == 0:
+    #             continue  # If we have no dead features, then we don't need to resample
 
-            # Draw `d_sae` samples from [0, 1, ..., batch_size-1], with probabilities proportional to l2_loss
-            distn = Categorical(
-                probs=l2_loss_instance.pow(2) / l2_loss_instance.pow(2).sum()
-            )
-            replacement_indices = distn.sample((n_dead,))  # type: ignore
+    #         # Compute L2 loss for each element in the batch
+    #         l2_loss_instance = l2_loss[:, instance]  # [batch_size]
+    #         if l2_loss_instance.max() < 1e-6:
+    #             continue  # If we have zero reconstruction loss, we don't need to resample
 
-            # Index into the batch of hidden activations to get our replacement values
-            replacement_values = (h - self.b_dec)[
-                replacement_indices, instance
-            ]  # [n_dead d_in]
-            replacement_values_normalized = replacement_values / (
-                replacement_values.norm(dim=-1, keepdim=True)
-                + self.weight_normalize_eps
-            )
+    #         # Draw `d_sae` samples from [0, 1, ..., batch_size-1], with probabilities proportional to l2_loss
+    #         distn = Categorical(
+    #             probs=l2_loss_instance.pow(2) / l2_loss_instance.pow(2).sum()
+    #         )
+    #         replacement_indices = distn.sample((n_dead,))  # type: ignore
 
-            # Get the norm of alive neurons (or 1.0 if there are no alive neurons)
-            W_enc_norm_alive_mean = (
-                self.W_enc[instance, :, ~is_dead].norm(dim=0).mean().item()
-                if (~is_dead).any()
-                else 1.0
-            )
+    #         # Index into the batch of hidden activations to get our replacement values
+    #         replacement_values = (h - self.b_dec)[
+    #             replacement_indices, instance
+    #         ]  # [n_dead d_in]
+    #         replacement_values_normalized = replacement_values / (
+    #             replacement_values.norm(dim=-1, keepdim=True)
+    #             + self.weight_normalize_eps
+    #         )
 
-            # Lastly, set the new weights & biases (W_dec is normalized, W_enc needs specific scaling, b_enc is zero)
-            self.W_dec.data[instance, dead_latents, :] = replacement_values_normalized
-            self.W_enc.data[instance, :, dead_latents] = (
-                replacement_values_normalized.T * W_enc_norm_alive_mean * resample_scale
-            )
-            self.b_enc.data[instance, dead_latents] = 0.0
+    #         # Get the norm of alive neurons (or 1.0 if there are no alive neurons)
+    #         W_enc_norm_alive_mean = (
+    #             self.W_enc[instance, :, ~is_dead].norm(dim=0).mean().item()
+    #             if (~is_dead).any()
+    #             else 1.0
+    #         )
+
+    #         # Lastly, set the new weights & biases (W_dec is normalized, W_enc needs specific scaling, b_enc is zero)
+    #         self.W_dec.data[instance, dead_latents, :] = replacement_values_normalized
+    #         self.W_enc.data[instance, :, dead_latents] = (
+    #             replacement_values_normalized.T * W_enc_norm_alive_mean * resample_scale
+    #         )
+    #         self.b_enc.data[instance, dead_latents] = 0.0

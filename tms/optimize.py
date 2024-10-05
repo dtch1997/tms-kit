@@ -74,6 +74,7 @@ def optimize_vanilla_sae(
     resample_freq: int = 2500,
     resample_window: int = 500,
     resample_scale: float = 0.5,
+    resample_threshold: float = 1e-8,
 ) -> dict[str, list]:
     """
     Optimizes the autoencoder using the given hyperparameters.
@@ -89,6 +90,7 @@ def optimize_vanilla_sae(
         resample_freq:      number of optimization steps between resampling dead latents
         resample_window:    number of steps needed for us to classify a neuron as dead
         resample_scale:     scale factor for resampled neurons
+        resample_threshold: threshold for classifying a neuron as dead. Only used in resample_simple
 
     Returns:
         data_log:               dictionary containing data we'll use for visualization
@@ -108,9 +110,8 @@ def optimize_vanilla_sae(
             frac_active_in_window = torch.stack(
                 frac_active_list[-resample_window:], dim=0
             )
-            # TODO: implement
             if resample_method == "simple":
-                sae.resample_simple(frac_active_in_window, resample_scale)
+                sae.resample_simple(frac_active_in_window, resample_scale, resample_threshold)
             elif resample_method == "advanced":
                 sae.resample_advanced(frac_active_in_window, resample_scale, batch_size)
 
