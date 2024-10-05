@@ -5,7 +5,7 @@ import einops
 from dataclasses import dataclass
 from jaxtyping import Float
 
-from tms.data import DataGenerator, ModelActivationsGenerator
+from tms.data import DataGenerator, ModelActivationsGenerator, IIDFeatureGenerator
 from tms.loss import ImportanceWeightedLoss
 from tms.model import Model
 from tms.optimize import optimize, optimize_vanilla_sae
@@ -14,11 +14,22 @@ from tms.utils.device import get_device
 from tms.utils import utils
 from tms.sae import VanillaSAE
 
+from torch import Tensor
+from torch.nn import init
+from torchmetrics.functional import pairwise_cosine_similarity
+import numpy as np
+import matplotlib.pyplot as plt
+
+from rich.jupyter import print as rprint
+from rich.table import Table
+from rich.panel import Panel
+from rich.text import Text
+
 MAIN = __name__ == "__main__"
 
 
 class HierarchicalFeatureGenerator(DataGenerator):
-    """Generates features where odd-indexed features can only occur if odd features occur"""
+    """Generates features where feature 1 can only occur if feature 0 occurs"""
 
     def generate_batch(self, batch_size: int) -> torch.Tensor:
         """
@@ -28,9 +39,8 @@ class HierarchicalFeatureGenerator(DataGenerator):
         feat_mag = torch.rand(batch_shape, device=get_device())
         feat_seeds = torch.rand(batch_shape, device=get_device())
         feat_vals = torch.where(feat_seeds <= self.feature_probability, feat_mag, 0.0)
-        # Zero out features that are odd-indexed if the previous feature is zero
-        # E.g feature 3 can only occur if feature 2 is non-zero
-        feat_vals[..., 1::2] *= (feat_vals[..., 0::2] > 0).float()
+        # Feature 1 can only occur if feature 0 occurs
+        feat_vals[..., 1] *= (feat_vals[..., 0] > 0).float()
         return feat_vals
 
 
@@ -41,6 +51,7 @@ class FeatureAbsorptionTMSConfig:
     n_features: int
     feature_probability: Float[torch.Tensor, "inst feats"]
     feature_importance: Float[torch.Tensor, "inst feats"]
+    data_gen_cls: type[DataGenerator] = IIDFeatureGenerator
 
 
 class FeatureAbsorptionTMS(TMS):
@@ -48,7 +59,7 @@ class FeatureAbsorptionTMS(TMS):
 
     def __init__(self, config: FeatureAbsorptionTMSConfig):
         model = Model(config.n_features, config.n_inst, config.d_hidden)
-        data_gen = HierarchicalFeatureGenerator(
+        data_gen = config.data_gen_cls(
             config.n_features, config.n_inst, config.feature_probability
         )
         loss_calc = ImportanceWeightedLoss(config.n_features, config.feature_importance)
@@ -57,12 +68,6 @@ class FeatureAbsorptionTMS(TMS):
 
 
 # Helper function to plot pairwise cosine similarities
-
-from torch import Tensor
-from torchmetrics.functional import pairwise_cosine_similarity
-import numpy as np
-import matplotlib.pyplot as plt
-
 
 def plot_W_pairwise_cos_sim_in_2d(
     W: Float[Tensor, "inst d_hidden feats"] | list[Float[Tensor, "d_hidden feats"]],
@@ -163,82 +168,6 @@ def plot_W_pairwise_cos_sim_in_2d(
     plt.show()
     return fig, axs
 
-
-# %%
-
-"""Demonstrate that the model can represent 2 hierarchical features in 2 dimensions"""
-
-device = get_device()
-n_inst = 10
-n_pairs = 1
-n_features = 2 * n_pairs
-d_hidden = 2
-
-# NOTE: The even features are the ones that can be absorbed
-# So their probability ends up being lower than specified here
-feature_probability = torch.tensor([0.25] * n_features).to(device)
-feature_probability = einops.repeat(
-    feature_probability, "feats -> inst feats", inst=n_inst
-)
-feature_importance = (torch.ones(n_features)).to(device)
-feature_importance = einops.repeat(
-    feature_importance, "feats -> inst feats", inst=n_inst
-)
-
-# First train the TMS
-config = FeatureAbsorptionTMSConfig(
-    d_hidden=d_hidden,
-    n_inst=n_inst,
-    n_features=n_features,
-    feature_probability=feature_probability,
-    feature_importance=feature_importance,
-)
-tms = FeatureAbsorptionTMS(config)
-
-# Print some statistics from the data
-data = tms.data_gen.generate_batch(1000)
-print("Data marginal statistics: ")
-print((data > 0).float().mean(dim=(0, 1)))
-print()
-
-optimize(tms)
-
-# %%
-# Visualize the weights learned
-fig, ax = utils.plot_features_in_2d(
-    tms.model.W,
-    colors=["blue", "limegreen"],
-    title=f"Model embeddings: {n_features} features represented in 2D space",
-)
-utils.save_figure(fig, "model_embeddings.png")
-
-# %%
-# Now train an SAE on the model
-d_sae = 2
-sae = VanillaSAE(config.n_inst, config.d_hidden, d_sae, device=device)
-data_gen = ModelActivationsGenerator(tms.model, tms.data_gen)
-optimize_vanilla_sae(sae, data_gen)
-
-# %%
-# Visualize the weights learned
-fig, ax = utils.plot_features_in_2d(
-    einops.rearrange(sae.W_dec, "inst d_sae d_hidden -> inst d_hidden d_sae"),
-    colors=["blue", "limegreen"],
-    title=f"SAE decoder weights: {n_features} features represented in 2D space",
-)
-utils.save_figure(fig, "sae_latents.png")
-
-# Plot the cos sims of the SAE decoder weight and the true model decoder weights
-
-# %%
-W_dec_normalized_reshaped = einops.rearrange(
-    sae.W_dec_normalized, "inst d_sae d_hidden -> inst d_hidden d_sae"
-)
-
-# NOTE: Model W: [inst, d_hidden, n_feats] → W[0, :, 0] is the embedding for a feature
-# NOTE: SAE W_dec: [inst, d_hidden, d_sae] → W_dec[0, :, 0] is the embedding for an SAE latent
-
-
 def pairwise_cosine_similarity(
     A: Float[Tensor, "N d"],
     B: Float[Tensor, "M d"],
@@ -258,8 +187,6 @@ def get_instancewise_pairwise_cos_sim(
         output[i] = pairwise_cosine_similarity(W1[i].T, W2[i].T)
     return output
 
-
-# %%
 def plot_pairwise_cos_sim(
     W1: Float[Tensor, "inst d_hidden feats1"],
     W2: Float[Tensor, "inst d_hidden feats2"],
@@ -268,10 +195,11 @@ def plot_pairwise_cos_sim(
     cos_sim = get_instancewise_pairwise_cos_sim(W1, W2)
     cos_sim_np = cos_sim.detach().cpu().numpy()
 
-    fig, ax = plt.subplots(1, n_inst, figsize=(30, 3))
+    n_inst = cos_sim_np.shape[0]
+    fig, ax = plt.subplots(1, n_inst, figsize=(30, 3), squeeze = False)
     for i in range(n_inst):
-        ax[i].imshow(cos_sim_np[i], cmap="RdBu", vmin=-1, vmax=1)
-        ax[i].set_title(f"Instance {i}")
+        ax[0, i].imshow(cos_sim_np[i], cmap="RdBu", vmin=-1, vmax=1)
+        ax[0, i].set_title(f"Instance {i}")
 
     if title:
         fig.suptitle(title, fontsize=15)
@@ -281,33 +209,158 @@ def plot_pairwise_cos_sim(
     )
 
     # Colorbar
-    fig.colorbar(ax[0].images[0], ax=ax, orientation="horizontal")
+    fig.colorbar(ax[0, 0].images[0], ax=ax, orientation="horizontal")
     return fig
 
+def print_sample_feats_and_acts(feats: torch.Tensor, sae: VanillaSAE, model: Model):
+    device = get_device()
+    feat_mags = feats.float().to(device)
+    latent_acts = sae.encode(model.encode(feat_mags))
+
+    def style_row(row):
+        text = Text()
+        for val in row:
+            style = "bold" if val > 1e-4 else "dim"
+            text.append(f"{val:.2f}", style=style)
+            text.append("  ")
+        return text
+
+    n_inst = feats.shape[1]
+    for instance_idx in range(n_inst):
+
+        table = Table(title="Sample feature values and corresponding SAE activations")
+
+        # Add columns
+        table.add_column("True features", justify="center")
+        table.add_column("SAE Latent acts", justify="center")
+
+        for row1, row2 in zip(feat_mags[:, instance_idx], latent_acts[:, instance_idx]):
+            text = Text()
+            table.add_row(
+                style_row(row1),
+                style_row(row2),
+            )
+        rprint(table)
+
+
+def run_experiment(config: FeatureAbsorptionTMSConfig, expt_prefix: str = ""):
+
+
+    device = get_device()
+    tms = FeatureAbsorptionTMS(config)
+
+    # Print some statistics from the data
+    data = tms.data_gen.generate_batch(1000)
+    print("Data marginal statistics: ")
+    print((data > 0).float().mean(dim=(0, 1)))
+    print()
+
+    # Train the TMS
+    optimize(tms)
+
+    # Train an SAE on the TMS
+    d_sae = config.n_features
+    sae = VanillaSAE(config.n_inst, config.d_hidden, d_sae, device=device)
+    init.kaiming_uniform_(sae.W_dec, mode='fan_in', nonlinearity='relu')
+    init.kaiming_uniform_(sae.W_enc, mode='fan_in', nonlinearity='relu')
+    data_gen = ModelActivationsGenerator(tms.model, tms.data_gen)
+
+    # NOTE on number of training steps. 
+    # - Original implementation trains on 100M tokens
+    # - Here we train on 25K steps of 1024 * 4 tokens each 
+    # - This is equivalent to 100M tokens
+    optimize_vanilla_sae(sae, data_gen, steps = 25_000, batch_size=1024)
+
+    # Print the SAE activations on test data
+    x_test = torch.tensor(
+        [[1.0, 0.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0]]
+    ).to(device)
+    x_test = einops.repeat(x_test, "batch feats -> batch inst feats", inst=config.n_inst)
+    print_sample_feats_and_acts(x_test, sae, tms.model)
+
+    # Plot the similarity of SAE enc and dec weights to the model
+
+    fig = plot_pairwise_cos_sim(
+        sae.W_enc, tms.model.W, title="SAE Encoder to model cosine similarities"
+    )
+    utils.save_figure(fig, f"{expt_prefix}_sae_enc_to_model_cos_sim.png")
+
+    # Here, reshape W_dec to be [inst, d_hidden, d_sae] instead of [inst, d_sae, d_hidden]
+    W_dec_normalized_reshaped = einops.rearrange(
+        sae.W_dec_normalized, "inst d_sae d_hidden -> inst d_hidden d_sae"
+    )
+    fig = plot_pairwise_cos_sim(
+        W_dec_normalized_reshaped,
+        tms.model.W,
+        title="SAE Decoder to model cosine similarities",
+    )
+    utils.save_figure(fig, f"{expt_prefix}_sae_dec_to_model_cos_sim.png")
+
+# %% 
+""" Train a TMS and corresponding SAE on IID data """
+
+def run_iid_experiment():
+
+    device = get_device()
+    n_inst = 1
+    n_features = 4
+    d_hidden = 50
+
+    feature_probability = torch.tensor([0.25, 0.05, 0.05, 0.05]).to(device)
+    feature_probability = einops.repeat(
+        feature_probability, "feats -> inst feats", inst=n_inst
+    )
+    feature_importance = (torch.ones(n_features)).to(device)
+    feature_importance = einops.repeat(
+        feature_importance, "feats -> inst feats", inst=n_inst
+    )
+
+    # First train the TMS
+    config = FeatureAbsorptionTMSConfig(
+        d_hidden=d_hidden,
+        n_inst=n_inst,
+        n_features=n_features,
+        feature_probability=feature_probability,
+        feature_importance=feature_importance,
+        data_gen_cls=IIDFeatureGenerator
+    )
+    run_experiment(config, expt_prefix="iid")
+
+if MAIN:
+    run_iid_experiment()
 
 # %%
 
-fig = plot_pairwise_cos_sim(
-    sae.W_enc, tms.model.W, title="SAE Encoder to model cosine similarities"
-)
-utils.save_figure(fig, "sae_enc_to_model_cos_sim.png")
+""" Train a TMS and corresponding SAE on data where feature 1 can only occur if feature 0 occurs """
 
-# %%
+def run_hierarchical_experiment():
+    device = get_device()
+    n_inst = 1
+    n_features = 4
+    d_hidden = 50
 
-fig = plot_pairwise_cos_sim(
-    W_dec_normalized_reshaped,
-    tms.model.W,
-    title="SAE Decoder to model cosine similarities",
-)
-utils.save_figure(fig, "sae_dec_to_model_cos_sim.png")
+    feature_probability = torch.tensor([0.25, 0.2, 0.05, 0.05]).to(device)
+    feature_probability = einops.repeat(
+        feature_probability, "feats -> inst feats", inst=n_inst
+    )
+    feature_importance = (torch.ones(n_features)).to(device)
+    feature_importance = einops.repeat(
+        feature_importance, "feats -> inst feats", inst=n_inst
+    )
 
-# %%
-fig = plot_pairwise_cos_sim(W_dec_normalized_reshaped, W_dec_normalized_reshaped)
-utils.save_figure(fig, "sae_to_sae_cos_sim.png")
+    # First train the TMS
+    config = FeatureAbsorptionTMSConfig(
+        d_hidden=d_hidden,
+        n_inst=n_inst,
+        n_features=n_features,
+        feature_probability=feature_probability,
+        feature_importance=feature_importance,
+        data_gen_cls=HierarchicalFeatureGenerator
+    )
+    run_experiment(config, expt_prefix="hrch")
 
-# %%
-fig = plot_pairwise_cos_sim(tms.model.W, tms.model.W)
-utils.save_figure(fig, "model_to_model_cos_sim.png")
-
-
-# %%
+if MAIN:
+    run_hierarchical_experiment()
