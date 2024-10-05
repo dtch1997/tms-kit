@@ -133,6 +133,10 @@ def optimize_vanilla_sae(
         optimizer.step()
         optimizer.zero_grad()
 
+        # Normalize decoder weights by modifying them inplace (if not using tied weights)
+        if not sae.tied_weights:
+            sae.W_dec.data = sae.W_dec_normalized.data
+
         # Calculate the mean sparsities over batch dim for each feature
         frac_active = (acts.abs() > 1e-8).float().mean(0)
         frac_active_list.append(frac_active)

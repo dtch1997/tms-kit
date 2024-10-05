@@ -25,23 +25,6 @@ class SAE(nn.Module, ABC):
         x_recon = self.decode(z)
         return x_recon
 
-    def loss(
-        self,
-        h: Float[Tensor, "... inst d_in"],
-        sae_act: Float[Tensor, "... inst d_sae"],
-        h_recon: Float[Tensor, "... inst d_in"],
-        l1_coeff: float = 1e-3,
-    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        # Compute loss terms
-        L_reconstruction = (h_recon - h).pow(2).mean(-1)
-        L_sparsity = sae_act.abs().sum(-1)
-        info_dict = {
-            "L_reconstruction": L_reconstruction,
-            "L_sparsity": L_sparsity,
-        }
-        loss = (L_reconstruction + l1_coeff * L_sparsity).mean(0).sum()
-        return loss, info_dict
-
 
 class VanillaSAE(SAE):
     n_inst: int
@@ -113,11 +96,28 @@ class VanillaSAE(SAE):
         return (
             einops.einsum(
                 z,
-                self.W_dec_normalized,
+                self.W_dec,
                 "... inst d_sae, inst d_sae d_in -> ... inst d_in",
             )
             + self.b_dec
         )
+
+    def loss(
+        self,
+        h: Float[Tensor, "... inst d_in"],
+        sae_act: Float[Tensor, "... inst d_sae"],
+        h_recon: Float[Tensor, "... inst d_in"],
+        l1_coeff: float = 1e-3,
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+        # Compute loss terms
+        L_reconstruction = (h_recon - h).pow(2).mean(-1)
+        L_sparsity = sae_act.abs().sum(-1)
+        info_dict = {
+            "L_reconstruction": L_reconstruction,
+            "L_sparsity": L_sparsity,
+        }
+        loss = (L_reconstruction + l1_coeff * L_sparsity).mean(0).sum()
+        return loss, info_dict
 
     @torch.no_grad()
     def resample_simple(
