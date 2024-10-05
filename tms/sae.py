@@ -47,7 +47,6 @@ class VanillaSAE(SAE):
     n_inst: int
     d_in: int
     d_sae: int
-    # Architectural details
 
     W_enc: Float[Tensor, "inst d_in d_sae"]
     _W_dec: Float[Tensor, "inst d_sae d_in"] | None
@@ -61,7 +60,6 @@ class VanillaSAE(SAE):
         d_sae: int,
         weight_normalize_eps: float = 1e-8,
         tied_weights: bool = False,
-        architecture: Literal["standard", "gated"] = "standard",
         device=None,
     ):
         if device is None:
@@ -72,7 +70,6 @@ class VanillaSAE(SAE):
         self.d_sae = d_sae
         self.weight_normalize_eps = weight_normalize_eps
         self.tied_weights = tied_weights
-        self.architecture = architecture
 
         self.W_enc = nn.Parameter(
             nn.init.kaiming_uniform_(torch.empty((n_inst, d_in, d_sae)))

@@ -7,12 +7,11 @@ Usage as script:
 - Useful if you want to run all experiments at once and save the results
 
 Usage as Jupyter notebook:
-- The first cell defines all the necessary classes and functions
+- This cell defines all the necessary classes and functions
 - Each subsequent cell runs a different experiment and visualizes the results
 - Useful if you want to run each experiment separately and inspect the results
 """
 
-# %%
 import torch
 import einops
 import pathlib
@@ -275,7 +274,7 @@ def run_tms_sae_no_resampling():
     n_features = d_sae = 5
     n_inst = 8
 
-    feature_probability = (0.01 * torch.ones(n_inst)).to(device)
+    feature_probability = (50 ** -torch.linspace(0, 1, n_inst)).to(device)
     feature_probability = einops.repeat(
         feature_probability, "inst -> inst feats", feats=n_features
     )
@@ -293,13 +292,13 @@ def run_tms_sae_no_resampling():
         feature_importance=feature_importance,
     )
     tms = BottleneckTMS(config)
-    optimize(tms, steps=1000)
+    optimize(tms)
 
     # Train the SAE
     sae = VanillaSAE(n_inst, d_in, d_sae, device=device)
     model_act_gen = ModelActivationsGenerator(tms.model, tms.data_gen)
 
-    data_log = optimize_vanilla_sae(sae, model_act_gen, steps=1000)
+    data_log = optimize_vanilla_sae(sae, model_act_gen, steps=25_000)
 
     utils.frac_active_line_plot(
         frac_active=torch.stack(data_log["frac_active"]),
@@ -319,6 +318,57 @@ def run_tms_sae_no_resampling():
 
 
 if MAIN:
-    # NOTE: Not rendering for some reason...
     run_tms_sae_no_resampling()
 # %%
+def run_tms_sae_simple_resampling():
+    """Train an SAE on TMS with simple resampling"""
+    device = get_device()
+    d_hidden = d_in = 2
+    n_features = d_sae = 5
+    n_inst = 8
+
+    feature_probability = (50 ** -torch.linspace(0, 1, n_inst)).to(device)
+    feature_probability = einops.repeat(
+        feature_probability, "inst -> inst feats", feats=n_features
+    )
+    feature_importance = (0.9 ** torch.arange(n_features)).to(device)
+    feature_importance = einops.repeat(
+        feature_importance, "feats -> inst feats", inst=n_inst
+    )
+
+    # Train the TMS
+    config = BottleneckTMSConfig(
+        d_hidden=d_hidden,
+        n_inst=n_inst,
+        n_features=n_features,
+        feature_probability=feature_probability,
+        feature_importance=feature_importance,
+    )
+    tms = BottleneckTMS(config)
+    optimize(tms)
+
+    # Train the SAE
+    sae = VanillaSAE(n_inst, d_in, d_sae, device=device)
+    model_act_gen = ModelActivationsGenerator(tms.model, tms.data_gen)
+
+    data_log = optimize_vanilla_sae(sae, model_act_gen, steps=25_000, resample_method="simple")
+
+    utils.frac_active_line_plot(
+        frac_active=torch.stack(data_log["frac_active"]),
+        title="Probability of sae features being active during training",
+        avg_window=10,
+    )
+
+    utils.animate_features_in_2d(
+        {
+            "Encoder weights": torch.stack(data_log["W_enc"]),
+            "Decoder weights": torch.stack(data_log["W_dec"]).transpose(-1, -2),
+        },
+        steps=data_log["steps"],
+        filename=str((DIR / "sae_latent_training_history_simple_resample.html").absolute()),
+        title="SAE on toy model",
+    )
+
+
+if MAIN:
+    run_tms_sae_simple_resampling()

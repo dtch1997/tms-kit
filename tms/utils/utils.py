@@ -650,8 +650,8 @@ def animate_features_in_2d(
             "plot": p,
             "data": [
                 {
-                    "x": round(tensor[ts, p, d, 0], 4),
-                    "y": round(tensor[ts, p, d, 1], 4),
+                    "x": round(tensor[ts, p, d, 0].item(), 4),
+                    "y": round(tensor[ts, p, d, 1].item(), 4),
                     "color": colors_array[ts][p][d],
                 }
                 for d in range(datapoints)
