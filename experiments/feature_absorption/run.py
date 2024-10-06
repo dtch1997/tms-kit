@@ -18,7 +18,7 @@ import einops
 from dataclasses import dataclass
 from jaxtyping import Float
 
-from tms.data import DataGenerator, ModelActivationsGenerator, IIDFeatureGenerator
+from tms.data import DataGenerator, ModelActivationsGenerator
 from tms.loss import ImportanceWeightedLoss
 from tms.model import Model
 from tms.optimize import optimize, optimize_vanilla_sae
@@ -41,16 +41,14 @@ from rich.text import Text
 MAIN = __name__ == "__main__"
 
 class IIDConstantFeatureGenerator(DataGenerator):
-    """Generates features where all features are constant"""
 
     def generate_batch(self, batch_size: int) -> torch.Tensor:
         """
         Generates a batch of data.
         """
         batch_shape = (batch_size, self.n_inst, self.n_features)
-        feat_seeds = torch.rand(batch_shape, device=get_device())
-        # NOTE: Magnitude fixed to be 1
         feat_mag = torch.ones(batch_shape, device=get_device())
+        feat_seeds = torch.rand(batch_shape, device=get_device())
         feat_vals = torch.where(feat_seeds <= self.feature_probability, feat_mag, 0.0)
         return feat_vals
 
@@ -62,7 +60,6 @@ class HierarchicalConstantFeatureGenerator(DataGenerator):
         Generates a batch of data.
         """
         batch_shape = (batch_size, self.n_inst, self.n_features)
-        # NOTE: Magnitude fixed to be 1
         feat_mag = torch.ones(batch_shape, device=get_device())
         feat_seeds = torch.rand(batch_shape, device=get_device())
         feat_vals = torch.where(feat_seeds <= self.feature_probability, feat_mag, 0.0)
@@ -78,7 +75,7 @@ class FeatureAbsorptionTMSConfig:
     n_features: int
     feature_probability: Float[torch.Tensor, "inst feats"]
     feature_importance: Float[torch.Tensor, "inst feats"]
-    data_gen_cls: type[DataGenerator] = IIDFeatureGenerator
+    data_gen_cls: type[DataGenerator]
 
 
 class FeatureAbsorptionTMS(TMS):
@@ -288,15 +285,13 @@ def run_experiment(config: FeatureAbsorptionTMSConfig, expt_prefix: str = ""):
     # Train an SAE on the TMS
     d_sae = config.n_features
     sae = VanillaSAE(config.n_inst, config.d_hidden, d_sae, device=device)
-    init.kaiming_uniform_(sae.W_dec, mode='fan_in', nonlinearity='relu')
-    init.kaiming_uniform_(sae.W_enc, mode='fan_in', nonlinearity='relu')
     data_gen = ModelActivationsGenerator(tms.model, tms.data_gen)
 
     # NOTE on number of training steps. 
     # - Original implementation trains on 100M tokens
     # - Here we train on 25K steps of 1024 * 4 tokens each 
     # - This is equivalent to 100M tokens
-    optimize_vanilla_sae(sae, data_gen, steps = 25_000, batch_size=1024)
+    optimize_vanilla_sae(sae, data_gen, steps = 25_000, l1_coeff=0.005, resample_method = "simple")
 
     # Print the SAE activations on test data
     x_test = torch.tensor(
