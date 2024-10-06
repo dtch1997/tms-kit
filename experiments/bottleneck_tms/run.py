@@ -372,7 +372,23 @@ def run_tms_sae_simple_resampling():
     sae = VanillaSAE(n_inst, d_in, d_sae, device=device)
     model_act_gen = ModelActivationsGenerator(tms.model, tms.data_gen)
 
-    data_log = optimize_vanilla_sae(sae, model_act_gen, steps=25_000, resample_method="simple")
+    data_log = optimize_vanilla_sae(
+        sae, model_act_gen, steps=25_000, l1_coeff=0.2, resample_method="simple"
+    )
+
+    # Plot some SAE data
+    h = model_act_gen.generate_batch(500)
+    with torch.inference_mode():
+        h_r = sae(h)
+
+    utils.animate_features_in_2d(
+        {
+            "h": einops.rearrange(h, "batch inst d_in -> inst d_in batch"),
+            "h<sub>r</sub>": einops.rearrange(h_r, "batch inst d_in -> inst d_in batch"),
+        },
+        filename=str(DIR / "animation-reconstructions.html"),
+        title="Hidden state vs reconstructions",
+    )
 
     utils.frac_active_line_plot(
         frac_active=torch.stack(data_log["frac_active"]),
@@ -389,6 +405,10 @@ def run_tms_sae_simple_resampling():
         filename=str((DIR / "sae_latent_training_history_simple_resample.html").absolute()),
         title="SAE on toy model",
     )
+
+    # Meta-lesson: 
+    # - Training an SAE is a balance between reconstruction and sparsity
+    # - If the SAE appears to achieve zero reconstruction but non-sparse latents, it's likely that we need to bump up the L1 coefficient
 
 
 if MAIN:

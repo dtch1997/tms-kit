@@ -64,7 +64,7 @@ def optimize_vanilla_sae(
     sae: VanillaSAE,
     data_gen: ModelActivationsGenerator,
     *,
-    l1_coeff: float = 1e-3,
+    l1_coeff: float = 1,
     batch_size: int = 1024,
     steps: int = 10_000,
     log_freq: int = 50,
@@ -135,7 +135,7 @@ def optimize_vanilla_sae(
 
         # Normalize decoder weights by modifying them inplace (if not using tied weights)
         if not sae.tied_weights:
-            sae.W_dec.data = sae.W_dec_normalized.data
+            sae.W_dec.data = sae.W_dec_normalized
 
         # Calculate the mean sparsities over batch dim for each feature
         frac_active = (acts.abs() > 1e-8).float().mean(0)
