@@ -1,6 +1,41 @@
 # CHANGELOG
 
 
+## v0.3.0 (2024-10-08)
+
+### Chores
+
+* chore: fix gh pages ([`960ee02`](https://github.com/dtch1997/tms-kit/commit/960ee027f7cb90b31df290668e35cc1c892ef8a0))
+
+* chore: add docstring for plotting utilities ([`01ddd2d`](https://github.com/dtch1997/tms-kit/commit/01ddd2d1ee0744fe19f02a1afc89956a9f245ea2))
+
+* chore: add docs (#8)
+
+* separate out dev dependencies
+
+* update project description
+
+* update docs
+
+* fix hyperlinks
+
+* add sphinx build to test workflow
+
+* add deploy to release workflow
+
+* re-add rich
+
+---------
+
+Co-authored-by: Daniel Tan <dtch1997@users.noreply.github.com> ([`df98656`](https://github.com/dtch1997/tms-kit/commit/df986562824bd874cf0342c031f5d43aa6d843ca))
+
+### Features
+
+* feat: switch sphinx-build to -b mode ([`f483f14`](https://github.com/dtch1997/tms-kit/commit/f483f14ab2717ca1aec40313e1a4ad5d9427a0da))
+
+* feat: build docs ([`a3d0320`](https://github.com/dtch1997/tms-kit/commit/a3d03209e835c76470db78a238040ad1cbb5767d))
+
+
 ## v0.2.0 (2024-10-08)
 
 ### Features
