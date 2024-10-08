@@ -1,5 +1,53 @@
 # CHANGELOG
 
+
+## v0.1.0 (2024-10-08)
+
+### Chores
+
+* chore: add pypi release ([`ad55749`](https://github.com/dtch1997/tms/commit/ad55749e61225406b6394c66d3a8cd0054511404))
+
+### Features
+
+* feat: version update ([`f190670`](https://github.com/dtch1997/tms/commit/f19067008b9697b276f04fe0109927c0667569a3))
+
+### Unknown
+
+* add pre-commit ([`a84831d`](https://github.com/dtch1997/tms/commit/a84831d98ea730255dca518156f1cac9cfbd9e6f))
+
+* fix feature absorption demo ([`ace9199`](https://github.com/dtch1997/tms/commit/ace919980894a9c5afea4caea87d9914e8ad8dbf))
+
+* Increase default L1 coefficient ([`cdc70c0`](https://github.com/dtch1997/tms/commit/cdc70c04e787bf837ac59fb32878e260aca03372))
+
+* add tests for sae normalization, resampling ([`52c501b`](https://github.com/dtch1997/tms/commit/52c501bcc092d8364ed24cd7ce14a28db6aa0076))
+
+* normalize W_dec after training step ([`c67d646`](https://github.com/dtch1997/tms/commit/c67d646f3b09d20aadb487c42cfe140fcb613ac2))
+
+* constant magnitude features ([`a672597`](https://github.com/dtch1997/tms/commit/a67259766c72adf7ebe80fa59bd85e546003b1e9))
+
+* fix bug ([`21006bc`](https://github.com/dtch1997/tms/commit/21006bc0fb86430ea1bfc26d4369776b5ce8a684))
+
+* minor updates to bottleneck sae experiment ([`9afede4`](https://github.com/dtch1997/tms/commit/9afede47982f44616b4c745dab20aa39621f024d))
+
+* fix rendering issue ([`e8d2b0a`](https://github.com/dtch1997/tms/commit/e8d2b0a3c36776c254a7d8bd7325f89813a17f22))
+
+* update feature absorption experiments ([`55371ab`](https://github.com/dtch1997/tms/commit/55371abe06c4e2ad93fa6dec84de79c948fa8c3b))
+
+* do not lint experiment code ([`a66adf9`](https://github.com/dtch1997/tms/commit/a66adf906b7ec341c6492c8dc3b61deb76add9dd))
+
+* fix lint ([`429f171`](https://github.com/dtch1997/tms/commit/429f171928fbb78ca72084feb4fc5165f415aa44))
+
+* add feature absorption experiments ([`444e49c`](https://github.com/dtch1997/tms/commit/444e49cb379c324a8a63a19f5c534c34bb576b1b))
+
+* refactor SAE loss ([`810f94b`](https://github.com/dtch1997/tms/commit/810f94b447b321abe9f581fa8dd984a88572ebf5))
+
+* add SAE training code and experiment ([`4441df4`](https://github.com/dtch1997/tms/commit/4441df415977a1e25b653650590fb5076a0624a8))
+
+* lint passing ([`1a72f58`](https://github.com/dtch1997/tms/commit/1a72f58bfe414014cd0835390091cf433af72aa2))
+
+* fix images saving ([`3831569`](https://github.com/dtch1997/tms/commit/3831569f0635d3919509d442bbc0e246d22f2ae2))
+
+
 ## v0.0.0 (2024-09-21)
 
 ### Unknown
@@ -24,7 +72,7 @@
 
 ---------
 
-Co-authored-by: Daniel Tan &lt;dtch1997@users.noreply.github.com&gt; ([`9eaafe0`](https://github.com/dtch1997/tms/commit/9eaafe0da283c393527d314252710909dab8e67c))
+Co-authored-by: Daniel Tan <dtch1997@users.noreply.github.com> ([`9eaafe0`](https://github.com/dtch1997/tms/commit/9eaafe0da283c393527d314252710909dab8e67c))
 
 * minor ([`12cf86c`](https://github.com/dtch1997/tms/commit/12cf86c023b1900632e42f65879ffc9b3494f933))
 
