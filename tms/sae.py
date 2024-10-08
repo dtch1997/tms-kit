@@ -1,14 +1,12 @@
 from jaxtyping import Float
 from torch import Tensor
 from abc import ABC, abstractmethod
-from typing import Literal
 from tms.utils.device import get_device
 
 import einops
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
-from torch.distributions import Categorical
 
 
 class SAE(nn.Module, ABC):
@@ -76,7 +74,9 @@ class VanillaSAE(SAE):
     @property
     def W_dec_normalized(self) -> Float[Tensor, "inst d_sae d_in"]:
         """Returns decoder weights, normalized over the autoencoder input dimension."""
-        return self.W_dec / (self.W_dec.norm(dim=-1, keepdim=True) + self.weight_normalize_eps)
+        return self.W_dec / (
+            self.W_dec.norm(dim=-1, keepdim=True) + self.weight_normalize_eps
+        )
 
     def encode(
         self, x: Float[Tensor, "... inst d_in"]
@@ -175,7 +175,7 @@ class VanillaSAE(SAE):
         """
 
         raise NotImplementedError("Advanced resampling not yet implemented")
-    
+
     #     h = self.generate_batch(batch_size)
     #     l2_loss = self.forward(h)[0]["L_reconstruction"]
 

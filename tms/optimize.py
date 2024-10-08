@@ -111,7 +111,9 @@ def optimize_vanilla_sae(
                 frac_active_list[-resample_window:], dim=0
             )
             if resample_method == "simple":
-                sae.resample_simple(frac_active_in_window, resample_scale, resample_threshold)
+                sae.resample_simple(
+                    frac_active_in_window, resample_scale, resample_threshold
+                )
             elif resample_method == "advanced":
                 sae.resample_advanced(frac_active_in_window, resample_scale, batch_size)
 

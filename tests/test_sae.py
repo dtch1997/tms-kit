@@ -3,8 +3,8 @@ import torch as t
 from tms.utils.device import get_device
 from tms.sae import VanillaSAE
 
+
 def test_sae_W_dec_normalized():
-    
     device = get_device()
     n_inst = 8
     d_in = 2
@@ -53,7 +53,9 @@ def test_resample_simple():
     # Check that b_enc match where the latents aren't dead, and b_enc is zero where they are
     assert (new_b_enc[features_are_dead].abs() < 1e-8).all()
     t.testing.assert_close(new_b_enc[~features_are_dead], old_b_enc[~features_are_dead])
-    t.testing.assert_close(new_b_enc[features_are_dead], t.zeros_like(new_b_enc[features_are_dead]))
+    t.testing.assert_close(
+        new_b_enc[features_are_dead], t.zeros_like(new_b_enc[features_are_dead])
+    )
 
     # Check that W_dec is correct:
     # (1) They should match where the latents aren't dead
@@ -81,7 +83,8 @@ def test_resample_simple():
     )
     t.testing.assert_close(
         new_W_dec[features_are_dead],
-        new_W_enc[features_are_dead] / new_W_enc[features_are_dead].norm(dim=-1, keepdim=True),
+        new_W_enc[features_are_dead]
+        / new_W_enc[features_are_dead].norm(dim=-1, keepdim=True),
         msg="Resampled normalized W_enc weights don't match resampled W_dec weights",
     )
 
