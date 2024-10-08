@@ -1,6 +1,6 @@
 [project]
 name = "tms-kit"
-version = "0.1.0"
+version = "0.2.0"
 description = "Toy models of superposition experiments"
 authors = [{ name = "Daniel Tan", email = "dtch1997@users.noreply.github.com" }]
 dependencies = [
