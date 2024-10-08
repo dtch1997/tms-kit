@@ -5,7 +5,7 @@
 groups = ["default", "dev", "tutorials"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:528c5da3825886c531295b9cd4b31e7dc07975b50f7ab49a2054d2488ddd7cd1"
+content_hash = "sha256:c6d3641c6c980e5b286df57469b2473dccfc7007f52359f20c3c0d1f59599308"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -401,7 +401,7 @@ name = "markdown-it-py"
 version = "3.0.0"
 requires_python = ">=3.8"
 summary = "Python port of markdown-it. Markdown parsing, done right!"
-groups = ["tutorials"]
+groups = ["default", "tutorials"]
 dependencies = [
     "mdurl~=0.1",
 ]
@@ -490,7 +490,7 @@ name = "mdurl"
 version = "0.1.2"
 requires_python = ">=3.7"
 summary = "Markdown URL utilities"
-groups = ["tutorials"]
+groups = ["default", "tutorials"]
 files = [
     {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
     {file = "mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"},
@@ -851,7 +851,7 @@ name = "pygments"
 version = "2.18.0"
 requires_python = ">=3.8"
 summary = "Pygments is a syntax highlighting package written in Python."
-groups = ["dev", "tutorials"]
+groups = ["default", "dev", "tutorials"]
 files = [
     {file = "pygments-2.18.0-py3-none-any.whl", hash = "sha256:b8e6aca0523f3ab76fee51799c488e38782ac06eafcf95e7ba832985c8e7b13a"},
     {file = "pygments-2.18.0.tar.gz", hash = "sha256:786ff802f32e91311bff3889f6e9a86e81505fe99f2735bb6d60ae0c5004f199"},
@@ -933,7 +933,7 @@ name = "rich"
 version = "13.9.2"
 requires_python = ">=3.8.0"
 summary = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
-groups = ["tutorials"]
+groups = ["default", "tutorials"]
 dependencies = [
     "markdown-it-py>=2.2.0",
     "pygments<3.0.0,>=2.13.0",

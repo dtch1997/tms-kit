@@ -13,6 +13,7 @@ dependencies = [
     "pandas>=2.2.3",
     "matplotlib>=3.9.2",
     "torchmetrics>=1.4.2",
+    "rich>=13.9.2",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
