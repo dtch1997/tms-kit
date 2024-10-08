@@ -46,3 +46,7 @@ jobs:
       #   run: pdm run pyright
       - name: test
         run: pdm run pytest
+      - name: build
+        run: pdm build
+      - name: build docs
+        run: pdm run sphinx-build -b html docs docs/_build
