@@ -41,5 +41,6 @@ jobs:
         if: steps.release.outputs.released == 'true'
         with:
             github_token: ${{ secrets.GITHUB_TOKEN }}
-
-# TODO: Re-add publishing to PyPI
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: steps.release.outputs.released == 'true'
