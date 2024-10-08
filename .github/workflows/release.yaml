@@ -46,13 +46,6 @@ jobs:
             github_token: ${{ secrets.GITHUB_TOKEN }}
       # build and deploy docs to gh-pages
       # do this as part of the semantic release step to ensure version is bumped
-      - name: Setup PDM
-        uses: pdm-project/setup-pdm@v4
-        with:
-          cache: true
-          python-version: "3.11"
-      - name: Install dependencies
-        run: pdm install
       - name: Sphinx build
         run: |
           pdm run sphinx-build -M html docs docs/_build
@@ -61,5 +54,5 @@ jobs:
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/_build/
+          publish_dir: docs/_build/html
           force_orphan: true
