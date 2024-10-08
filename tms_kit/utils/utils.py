@@ -438,10 +438,10 @@ def plot_features_in_2d(
     allow_different_limits_across_subplots: bool = False,
     n_rows: int | None = None,
 ):
-    """
-    Visualises superposition in 2D.
+    """Plot the rows of the weight matrix of a trained Model.
 
-    If values is 4D, the first dimension is assumed to be timesteps, and an animation is created.
+    Each row is treated as a 2D vector.
+    If W is 4D, the first dimension is assumed to be timesteps, and an animation is created.
     """
     # Convert W into a list of 2D tensors, each of shape [feats, d_hidden=2]
     if isinstance(W, Tensor):
@@ -457,6 +457,9 @@ def plot_features_in_2d(
         n_feats = max(n_feats_list)
         n_instances = len(W)
         W = [w.detach().cpu() for w in W]
+
+    # Check that d_hidden = 2
+    assert d_hidden == 2, "Can only plot 2D features"
 
     W_list: list[Tensor] = [W_instance.T for W_instance in W]
 

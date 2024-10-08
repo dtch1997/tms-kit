@@ -12,10 +12,3 @@ class TMS(ABC):
     model: Model
     data_gen: DataGenerator
     loss_calc: LossCalculator
-
-    def __init__(
-        self, model: Model, data_gen: DataGenerator, loss_calc: LossCalculator
-    ):
-        self.model = model
-        self.data_gen = data_gen
-        self.loss_calc = loss_calc

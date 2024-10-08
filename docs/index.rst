@@ -31,6 +31,11 @@ This library provides utilities for reproducing experiments on toy models of sup
 Contents
 --------
 .. toctree::
+   :maxdepth: 2
+
+   basic_usage
+
+.. toctree::
    :caption: Project Links
 
    GitHub <https://github.com/dtch1997/tms-kit>

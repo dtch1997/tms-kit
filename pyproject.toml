@@ -20,7 +20,12 @@ readme = "README.md"
 license = { text = "MIT" }
 
 [project.optional-dependencies]
-dev = ["sphinx>=8.0.2", "ruff>=0.6.9", "pytest>=8.3.3"]
+dev = [
+    "sphinx>=8.0.2",
+    "ruff>=0.6.9",
+    "pytest>=8.3.3",
+    "furo>=2024.8.6",
+]
 tutorials = ["kaleido==0.2.1", "rich>=13.9.2", "simple-parsing>=0.1.6"]
 [build-system]
 requires = ["pdm-backend"]
