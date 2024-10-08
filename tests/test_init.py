@@ -1,4 +1,4 @@
-from tms import __version__
+from tms_kit import __version__
 
 
 def test_version():

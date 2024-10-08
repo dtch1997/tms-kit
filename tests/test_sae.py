@@ -1,7 +1,7 @@
 import torch as t
 
-from tms.utils.device import get_device
-from tms.sae import VanillaSAE
+from tms_kit.utils.device import get_device
+from tms_kit.sae import VanillaSAE
 
 
 def test_sae_W_dec_normalized():

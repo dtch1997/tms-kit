@@ -18,14 +18,14 @@ import einops
 from dataclasses import dataclass
 from jaxtyping import Float
 
-from tms.data import DataGenerator, ModelActivationsGenerator
-from tms.loss import ImportanceWeightedLoss
-from tms.model import Model
-from tms.optimize import optimize, optimize_vanilla_sae
-from tms.tms import TMS
-from tms.utils.device import get_device
-from tms.utils import utils
-from tms.sae import VanillaSAE
+from tms_kit.data import DataGenerator, ModelActivationsGenerator
+from tms_kit.loss import ImportanceWeightedLoss
+from tms_kit.model import Model
+from tms_kit.optimize import optimize, optimize_vanilla_sae
+from tms_kit.tms import TMS
+from tms_kit.utils.device import get_device
+from tms_kit.utils import utils
+from tms_kit.sae import VanillaSAE
 
 from torch import Tensor
 from torch.nn import init

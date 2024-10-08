@@ -7,9 +7,9 @@ from typing import Callable
 from typing import Literal
 from tqdm import tqdm
 
-from tms.tms import TMS
-from tms.sae import VanillaSAE
-from tms.data import ModelActivationsGenerator
+from tms_kit.tms import TMS
+from tms_kit.sae import VanillaSAE
+from tms_kit.data import ModelActivationsGenerator
 
 
 def linear_lr(step, steps):

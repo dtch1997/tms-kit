@@ -1,9 +1,9 @@
 """Define the architecture for a TMS"""
 
 from abc import ABC
-from tms.data import DataGenerator
-from tms.loss import LossCalculator
-from tms.model import Model
+from tms_kit.data import DataGenerator
+from tms_kit.loss import LossCalculator
+from tms_kit.model import Model
 
 
 class TMS(ABC):

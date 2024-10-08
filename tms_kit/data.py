@@ -6,8 +6,8 @@ import einops
 from abc import ABC, abstractmethod
 from jaxtyping import Float
 from torch import Tensor
-from tms.model import Model
-from tms.utils.device import get_device
+from tms_kit.model import Model
+from tms_kit.utils.device import get_device
 
 
 class DataGenerator(ABC):

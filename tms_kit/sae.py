@@ -1,7 +1,7 @@
 from jaxtyping import Float
 from torch import Tensor
 from abc import ABC, abstractmethod
-from tms.utils.device import get_device
+from tms_kit.utils.device import get_device
 
 import einops
 import torch.nn as nn

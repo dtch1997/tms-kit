@@ -20,21 +20,21 @@ from dataclasses import dataclass
 from jaxtyping import Float
 from typing import Type
 
-from tms.data import (
+from tms_kit.data import (
     DataGenerator,
     IIDFeatureGenerator,
     CorrelatedFeatureGenerator,
     AnticorrelatedFeatureGenerator,
     ModelActivationsGenerator,
 )
-from tms.loss import ImportanceWeightedLoss
-from tms.model import Model
-from tms.optimize import optimize, optimize_vanilla_sae
-from tms.tms import TMS
-from tms.utils.device import get_device
-from tms.utils import utils
-from tms.utils.plotly import line
-from tms.sae import VanillaSAE
+from tms_kit.loss import ImportanceWeightedLoss
+from tms_kit.model import Model
+from tms_kit.optimize import optimize, optimize_vanilla_sae
+from tms_kit.tms import TMS
+from tms_kit.utils.device import get_device
+from tms_kit.utils import utils
+from tms_kit.utils.plotly import line
+from tms_kit.sae import VanillaSAE
 
 MAIN = __name__ == "__main__"
 DIR = pathlib.Path(__file__).parent

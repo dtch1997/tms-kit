@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from torch import Tensor
 from jaxtyping import Float
 
-from tms.utils.device import get_device
+from tms_kit.utils.device import get_device
 
 
 def linear_lr(step, steps):
