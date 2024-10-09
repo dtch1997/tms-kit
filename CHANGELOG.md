@@ -1,6 +1,13 @@
 # CHANGELOG
 
 
+## v0.4.1 (2024-10-09)
+
+### Fixes
+
+* fix: image rendering ([`c6bc824`](https://github.com/dtch1997/tms-kit/commit/c6bc824584a42c506bd7ce5727b0c80ee013e95e))
+
+
 ## v0.4.0 (2024-10-09)
 
 ### Features
