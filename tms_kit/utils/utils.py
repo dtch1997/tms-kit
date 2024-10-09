@@ -20,6 +20,8 @@ from plotly.subplots import make_subplots
 from rich import print as rprint
 from torch import Tensor
 
+from tms_kit.model import Model
+
 Arr = np.ndarray
 
 red = plt.get_cmap("coolwarm")(0.0)
@@ -121,14 +123,14 @@ def rearrange_full_tensor(
     return W, n_monosemantic_features_list
 
 
-def get_viridis_str(v: float) -> str:
-    r, g, b, a = plt.get_cmap("viridis")(v)
+def get_cmap_str(v: float, cmap_name: str = "cool") -> str:
+    r, g, b, a = plt.get_cmap(cmap_name)(v)
     r, g, b = int(r * 255), int(g * 255), int(b * 255)
     return f"rgb({r}, {g}, {b})"
 
 
-def get_viridis(v: float) -> tuple[float, float, float]:
-    r, g, b, a = plt.get_cmap("viridis")(v)
+def get_cmap(v: float, cmap_name: str = "cool") -> tuple[float, float, float]:
+    r, g, b, a = plt.get_cmap(cmap_name)(v)
     return (r, g, b)
 
 
@@ -171,7 +173,7 @@ def plot_features_in_Nd(
         "sum",
     ).sqrt()
     colors = [
-        [get_viridis_str(v.item()) for v in polysemanticity_for_this_instance]
+        [get_cmap_str(v.item()) for v in polysemanticity_for_this_instance]
         for polysemanticity_for_this_instance in polysemanticity
     ]
 
@@ -500,7 +502,7 @@ def plot_features_in_2d(
                 )
     elif isinstance(colors, Tensor):
         assert colors.shape == (n_instances, n_feats)
-        colors_list = [[get_viridis(v) for v in color] for color in colors.tolist()]
+        colors_list = [[get_cmap(v) for v in color] for color in colors.tolist()]
 
     # Create a figure and axes, and make sure axs is a 2D array
     fig, axs = plt.subplots(n_rows, n_cols, figsize=(2.5 * n_cols, 2.5 * n_rows))
