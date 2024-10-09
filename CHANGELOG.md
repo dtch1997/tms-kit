@@ -1,6 +1,13 @@
 # CHANGELOG
 
 
+## v0.4.0 (2024-10-09)
+
+### Features
+
+* feat: improve docs ([`6f08db2`](https://github.com/dtch1997/tms-kit/commit/6f08db243189cb2559ff6ea524ce332f75d0c468))
+
+
 ## v0.3.0 (2024-10-08)
 
 ### Chores
