@@ -97,6 +97,8 @@ Lastly, we can inspect the results of the training by plotting the features lear
     utils.save_figure(fig, "5_2_superposition.png")
 
 The resulting plot is as follows: 
-.. image:: _static/5_2_superposition.png
 
+.. image:: _static/5_2_superposition.png
     :alt: Superposition: 5 features represented in 2D space
+
+The full code for this example can be found in the :code:`experiments/demo` directory of the repository, available `here <https://github.com/dtch1997/tms-kit/blob/main/experiments/demo/run.py>`_.
